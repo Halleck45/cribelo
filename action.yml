@@ -1,0 +1,120 @@
+name: Cribelo
+description: Which files of this pull request deserve a human reader. Posts the plan as one comment, updated on every push.
+author: Jean-François Lépine
+branding:
+  icon: filter
+  color: orange
+
+inputs:
+  version:
+    description: Cribelo version to run, for example 1.2.0. Default is the latest release.
+    default: latest
+  base:
+    description: Reference to compare against. Default is the base branch of the pull request.
+    default: ""
+  top:
+    description: Read exactly this many files. Default is every high file, at least three.
+    default: ""
+  budget:
+    description: Reading time available, for example 15m. Overrides top when set.
+    default: ""
+  fail-on:
+    description: Fail the job when a file reaches this level, high or medium. Default never.
+    default: never
+  comment:
+    description: Post the plan as a pull request comment.
+    default: "true"
+  token:
+    description: Token used to post the comment. Needs pull-requests write.
+    default: ${{ github.token }}
+
+outputs:
+  plan:
+    description: Path of the plan in markdown.
+    value: ${{ steps.plan.outputs.path }}
+  highest:
+    description: Highest level in the change, high, medium, low or none.
+    value: ${{ steps.plan.outputs.highest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install cribelo
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        case "$(uname -m)" in x86_64) arch=x86_64 ;; aarch64|arm64) arch=arm64 ;; *) echo "unsupported arch"; exit 1 ;; esac
+        if [ "$VERSION" = latest ]; then
+          url="https://github.com/cribelo/cribelo/releases/latest/download/cribelo_Linux_${arch}"
+        else
+          url="https://github.com/cribelo/cribelo/releases/download/v${VERSION#v}/cribelo_Linux_${arch}"
+        fi
+        mkdir -p "$RUNNER_TEMP/cribelo"
+        curl -fsSL "$url" -o "$RUNNER_TEMP/cribelo/cribelo"
+        chmod +x "$RUNNER_TEMP/cribelo/cribelo"
+        echo "$RUNNER_TEMP/cribelo" >> "$GITHUB_PATH"
+
+    - name: Fetch the base branch
+      shell: bash
+      env:
+        BASE: ${{ inputs.base != '' && inputs.base || github.base_ref }}
+      run: |
+        set -euo pipefail
+        if [ -n "$BASE" ]; then
+          git fetch --no-tags origin "+refs/heads/${BASE#origin/}:refs/remotes/origin/${BASE#origin/}" || true
+        fi
+
+    - name: Plan
+      id: plan
+      shell: bash
+      env:
+        BASE: ${{ inputs.base != '' && inputs.base || github.base_ref }}
+        TOP: ${{ inputs.top }}
+        BUDGET: ${{ inputs.budget }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        set -uo pipefail
+        args=(--format markdown --fail-on "$FAIL_ON" --no-color)
+        [ -n "$BASE" ] && args+=(--base "origin/${BASE#origin/}")
+        if [ -n "$BUDGET" ]; then args+=(--budget "$BUDGET"); elif [ -n "$TOP" ]; then args+=(--top "$TOP"); fi
+        out="$RUNNER_TEMP/cribelo/plan.md"
+        cribelo "${args[@]}" > "$out"; status=$?
+        echo "path=$out" >> "$GITHUB_OUTPUT"
+        highest=$(cribelo "${args[@]}" --format json 2>/dev/null | python3 -c '
+        import json, sys
+        rank = {"high": 3, "medium": 2, "low": 1}
+        levels = [f["level"] for f in json.load(sys.stdin)["files"]]
+        print(max(levels, key=lambda l: rank.get(l, 0)) if levels else "none")' || echo none)
+        echo "highest=$highest" >> "$GITHUB_OUTPUT"
+        cat "$out" >> "$GITHUB_STEP_SUMMARY"
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        [ "$status" -le 1 ] || exit "$status"
+
+    - name: Comment
+      if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        PLAN: ${{ steps.plan.outputs.path }}
+      run: |
+        set -euo pipefail
+        marker='<!-- cribelo-plan -->'
+        { echo "$marker"; cat "$PLAN"; } > "$RUNNER_TEMP/cribelo/comment.md"
+        existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+          --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
+        if [ -n "$existing" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$RUNNER_TEMP/cribelo/comment.md" > /dev/null
+        else
+          gh api "repos/$REPO/issues/$PR/comments" -F body=@"$RUNNER_TEMP/cribelo/comment.md" > /dev/null
+        fi
+
+    - name: Gate
+      if: steps.plan.outputs.status == '1'
+      shell: bash
+      run: |
+        echo "::error::cribelo: a file reached the ${{ inputs.fail-on }} level, see the plan"
+        exit 1
