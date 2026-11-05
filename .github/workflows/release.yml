@@ -66,6 +66,6 @@ jobs:
           case "$tag" in *-*) flags+=(--prerelease) ;; esac
           # Five jobs race to create the release; the losers fall through to the upload.
           gh release view "$tag" >/dev/null 2>&1 \
-            || gh release create "$tag" --title "$tag" --generate-notes "${flags[@]}" \
+            || gh release create "$tag" --title "$tag" --generate-notes ${flags[@]+"${flags[@]}"} \
             || true
           gh release upload "$tag" --clobber "out/$ASSET"
