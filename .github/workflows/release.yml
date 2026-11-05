@@ -1,0 +1,71 @@
+# A tag vX.Y.Z builds the cribelo binary for every platform and attaches it to
+# the release of the same name. install.sh and action.yml download from there.
+# A version with a dash (v1.0.0-rc.1) is published as a pre-release, which
+# releases/latest ignores.
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: cribelo_Linux_x86_64
+          - os: ubuntu-24.04-arm
+            asset: cribelo_Linux_arm64
+          - os: macos-15-intel
+            asset: cribelo_Darwin_x86_64
+          - os: macos-14
+            asset: cribelo_Darwin_arm64
+          - os: windows-latest
+            asset: cribelo_Windows_x86_64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+
+      - name: Toolchain (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+      - name: Toolchain (Windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build
+        shell: bash
+        env:
+          CGO_ENABLED: 1
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          go build -trimpath -ldflags "-s -w -X main.version=${version}" -o "out/$ASSET" .
+          "./out/$ASSET" --version
+
+      - name: Publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          flags=()
+          case "$tag" in *-*) flags+=(--prerelease) ;; esac
+          # Five jobs race to create the release; the losers fall through to the upload.
+          gh release view "$tag" >/dev/null 2>&1 \
+            || gh release create "$tag" --title "$tag" --generate-notes "${flags[@]}" \
+            || true
+          gh release upload "$tag" --clobber "out/$ASSET"

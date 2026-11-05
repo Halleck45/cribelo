@@ -1,2 +1,4 @@
-docs/logo/candidate*.png
-docs/logo/candidates*.png
+/cribelo
+/cribelo.exe
+/out/
+/dist/

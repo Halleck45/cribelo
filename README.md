@@ -44,7 +44,7 @@ Everything runs locally from the git checkout. There is no service, no account a
 curl -fsSL https://raw.githubusercontent.com/cribelo/cribelo/main/install.sh | sh
 ```
 
-Or `go install github.com/ast-metrics/ast-metrics/cmd/cribelo@latest`. Binaries for Linux, macOS and Windows are on the [releases page](https://github.com/cribelo/cribelo/releases). Supported languages: Go, PHP, Python, Rust, TypeScript, Java and C#.
+Or `go install github.com/cribelo/cribelo@latest`, which needs a C compiler for the tree-sitter parsers. Binaries for Linux, macOS and Windows are on the [releases page](https://github.com/cribelo/cribelo/releases). Supported languages: Go, PHP, Python, Rust, TypeScript, Java and C#.
 
 ```sh
 cribelo                      # plan for the working tree against the default branch
@@ -140,4 +140,4 @@ Fix commits are recognized by `fix:` and `revert:` conventional types, the 🐛 
 
 ## Source
 
-Cribelo is a command of [AST Metrics](https://github.com/ast-metrics/ast-metrics): the parsers, the complexity model and the dependency graph come from there, and the code of Cribelo lives in its `cmd/cribelo` and `internal/cribelo` directories. This repository holds the Action, the installer, the documentation and the issues. MIT license.
+Cribelo is a command of [AST Metrics](https://github.com/ast-metrics/ast-metrics): the parsers, the complexity model and the dependency graph come from there, and the code of Cribelo lives in its `cribelo` and `internal/cribelo` directories. This repository pins a revision of it in `go.mod` and builds the binary from it, and holds the Action, the installer, the documentation and the issues. MIT license.

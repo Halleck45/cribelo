@@ -1,0 +1,15 @@
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - run: sudo apt-get update && sudo apt-get install -y build-essential
+      - run: go vet ./...
+      - run: go build -o cribelo . && ./cribelo --version
+        env: { CGO_ENABLED: 1 }
