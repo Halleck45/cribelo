@@ -33,7 +33,7 @@ func fullVersion() string {
 		}
 	}
 	if v == "" {
-		v = "dev"
+		v = "dev" // a local go build, neither a release nor a go install
 	}
 	if !ok {
 		return v

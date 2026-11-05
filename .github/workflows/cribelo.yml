@@ -1,0 +1,14 @@
+# Cribelo on this repository's own pull requests.
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  cribelo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: cribelo/cribelo@main
+        with:
+          version: 0.1.0-rc.1
