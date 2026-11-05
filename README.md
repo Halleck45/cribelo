@@ -5,6 +5,8 @@
   </picture>
 </p>
 
+<h3 align="center">What to read, what to skip.</h3>
+
 <p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 34 files changed, read first eleven files with the reason for each, skip 23" width="760"></p>
 
 # Cribelo
