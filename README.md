@@ -1,4 +1,9 @@
-<p align="center"><img src="docs/logo.png" width="120" alt="Cribelo logo: one orange bar held above a sieve line, grey bars passed through"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+    <img src="docs/banner.png" width="520" alt="Cribelo: a flamingo standing on a GitHub contribution grid, holding one square in its beak">
+  </picture>
+</p>
 
 <p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 34 files changed, read first eleven files with the reason for each, skip 23" width="760"></p>
 
