@@ -44,10 +44,10 @@ Everything runs locally from the git checkout. There is no service, no account a
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/cribelo/cribelo/main/install.sh | sh
+brew install cribelo/tap/cribelo
 ```
 
-Or `go install github.com/cribelo/cribelo@latest`, which needs a C compiler for the tree-sitter parsers. Binaries for Linux, macOS and Windows are on the [releases page](https://github.com/cribelo/cribelo/releases). Supported languages: Go, PHP, Python, Rust, TypeScript, Java and C#.
+Without Homebrew: `curl -fsSL https://raw.githubusercontent.com/cribelo/cribelo/main/install.sh | sh`. Or `go install github.com/cribelo/cribelo@latest`, which needs a C compiler for the tree-sitter parsers. Binaries for Linux, macOS and Windows are on the [releases page](https://github.com/cribelo/cribelo/releases). Supported languages: Go, PHP, Python, Rust, TypeScript, Java and C#.
 
 ```sh
 cribelo                      # plan for the working tree against the default branch
