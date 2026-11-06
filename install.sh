@@ -42,7 +42,17 @@ mv "$tmp" "$dir/cribelo"
 trap - EXIT
 
 echo "Installed $("$dir/cribelo" --version) in $dir"
+cmd=cribelo
 case ":$PATH:" in
   *":$dir:"*) ;;
-  *) echo "Add $dir to your PATH." ;;
+  *) cmd="$dir/cribelo"; echo "$dir is not in your PATH: add it, or use the full path below." ;;
 esac
+
+cat <<EOF
+
+Now go to a repository, check out the branch you want reviewed, and run:
+
+  $cmd
+
+Short on time? $cmd --budget 30m
+EOF
