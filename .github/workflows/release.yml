@@ -22,7 +22,7 @@ jobs:
             asset: cribelo_Linux_arm64
           - os: macos-15-intel
             asset: cribelo_Darwin_x86_64
-          - os: macos-14
+          - os: macos-15
             asset: cribelo_Darwin_arm64
           - os: windows-latest
             asset: cribelo_Windows_x86_64.exe
