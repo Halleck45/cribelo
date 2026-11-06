@@ -7,8 +7,6 @@
 
 <h3 align="center">What to read, what to skip.</h3>
 
-<p align="center"><a href="docs/cribelo.mp4"><img src="docs/video-poster.png" width="720" alt="Watch Cribelo in 38 seconds: nine files of a 34-file pull request, ranked for a 30-minute review"></a></p>
-
 <p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 195 files changed, six to read first, each with bars for complexity, lines changed, coupling and recent commits, the share of a duplicate and a test mark, 189 skipped" width="900"></p>
 
 # Cribelo
