@@ -1,15 +1,44 @@
+# Builds cribelo on the three systems the release targets and runs it on a
+# throwaway repository (scripts/smoke-test.sh). A bump of AST Metrics in go.mod
+# goes through here before it can reach a release.
 name: ci
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: { go-version-file: go.mod }
-      - run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Toolchain (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+      - name: Toolchain (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Modules
+        shell: bash
+        run: |
+          go mod verify
+          go mod tidy -diff
       - run: go vet ./...
-      - run: go build -o cribelo . && ./cribelo --version
+
+      - name: Build
+        shell: bash
         env: { CGO_ENABLED: 1 }
+        run: go build -o "cribelo$(go env GOEXE)" .
+
+      - name: Smoke test
+        shell: bash
+        run: scripts/smoke-test.sh "./cribelo$(go env GOEXE)"
