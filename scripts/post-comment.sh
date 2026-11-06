@@ -13,7 +13,11 @@ body="${RUNNER_TEMP:-/tmp}/cribelo-comment.md"
 
 # Only update a comment written by this token: anyone can start a comment
 # with the marker. GITHUB_TOKEN cannot read /user, its login is fixed.
-login=$(gh api user --jq .login 2>/dev/null || echo 'github-actions[bot]')
+# On a 403, gh still prints the error body on stdout: keep the output only on
+# success, and only if it looks like a login, since it goes into a jq filter.
+if ! login=$(gh api user --jq .login 2>/dev/null) || ! [[ "$login" =~ ^[A-Za-z0-9-]+(\[bot\])?$ ]]; then
+  login='github-actions[bot]'
+fi
 
 existing=$(gh api "repos/$repo/issues/$pr/comments" --paginate \
   --jq ".[] | select(.user.login == \"$login\" and (.body | startswith(\"$marker\"))) | .id" | head -n1)
