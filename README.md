@@ -7,29 +7,32 @@
 
 <h3 align="center">What to read, what to skip.</h3>
 
-<p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 34 files changed, read first eleven files with the reason for each, skip 23" width="760"></p>
+<p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 195 files changed, six to read first, each with bars for complexity, lines changed, coupling and recent commits, the share of a duplicate and a test mark, 189 skipped" width="900"></p>
 
 # Cribelo
 
 Cribelo ranks the files of a pull request by how much they need a human reader, and says why. The name is the Latin *cribellum*, a small sieve.
 
 ```
-$ cribelo
-cribelo · 34 files changed vs origin/main (merge-base c1ef242)
+$ cribelo --base origin/main~25 --top 6
+cribelo · 195 files changed vs origin/main~25 (merge-base 17f217b)
 
-Read first (11 of 17) ~150 min
-   1  internal/cribelo/backtest.go   new replay() complexity 25, +7 more, +456 lines, new file
-   2  internal/cribelo/plan.go       new Run() complexity 35, +8 more, +363 lines, new file
-   3  internal/cribelo/clones.go     new Tokenize() complexity 37, +5 more, +214 lines, new file
-   4  cmd/cribelo/main.go            +244 lines, new main() complexity 24, +4 more, no test touched
-   5  internal/cribelo/git.go        +404 lines, new Changes() complexity 10, +18 more, new file
-   ...
-  11  internal/cribelo/diff.go       +179 lines, new parseHunks() complexity 9, +7 more, new file
+Read 6 of 195 changed files, about 4 h 21.
+Start with internal/analyzer/community_aggregator.go: new findingsOf() complexity 103, +39 more, +2001/−756 lines, imported by 84 files.
 
-Skip (23)
-  tests only 15 · ranked lower 5 · not analyzed (docs, config, other languages) 2 · no measurable change 1
+                                                           complexity  lines       used by   commits 90d        clone  tests
+  1  internal/analyzer/community_aggregator.go             ▮▮▮▮▮ 103   ▮▮▮▮▮ 2757  ▮▮▮▮▮ 84  ▮▮▮▮▯ 11, 2 fixes  85%    ✓
+  2  internal/analyzer/aggregator.go                       ▮▮▮▮▮ 118   ▮▮▮▮▮ 639   ▮▮▮▮▮ 84  ▮▮▮▯▯ 10, 7 fixes         ✓
+  3  internal/engine/php/tree_sitter_php_adapter.go        ▮▮▮▮▮ 59    ▮▮▮▮▮ 853   ▮▮▮▮▯ 19  ▮▮▮▯▯ 9, 4 fixes          ✓
+  4  internal/engine/csharp/tree_sitter_csharp_adapter.go  ▮▮▮▮▯ 34    ▮▮▮▮▯ 352   ▮▮▮▯▯ 9   ▮▮▮▯▯ 8, 3 fixes   88%    ✓
+  5  internal/engine/java/tree_sitter_java_adapter.go      ▮▮▮▮▯ 30    ▮▮▮▮▯ 325   ▮▮▮▯▯ 10  ▮▮▮▯▯ 7, 2 fixes   88%    ✓
+  6  internal/engine/python/tree_sitter_python_adapter.go  ▮▮▮▮▯ 22    ▮▮▮▯▯ 253   ▮▮▮▯▯ 10  ▮▮▮▯▯ 6, 5 fixes   79%    ✓
 
-Gate: passed (11 high, 5 medium, fail on never)
+Skip (189)
+  tests only 85 · ranked lower 78 · not analyzed (docs, config, other languages) 13 · no measurable change 9 · deleted 2 · binary 1 · generated 1    cribelo skip
+
+Gate: passed (60 high, 12 medium, fail on never)
+Weights: generic, not yet calibrated on this repository (run: cribelo calibrate)
 ```
 
 The reading list holds every file at the high level, and at least three. A small change gets three files; a change with twenty risky files gets twenty, because that is what it has. `--budget 15m` caps the list to what fits in the time you have, `--top 5` forces a count.
