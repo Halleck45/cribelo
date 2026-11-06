@@ -70,6 +70,34 @@ jobs:
             || true
           gh release upload "$tag" --clobber "out/$ASSET"
 
+  # Moves the major tag (v1) to this release, so that `uses: cribelo/cribelo@v1`
+  # gets it. Skipped for pre-releases, and for a patch on an older line: v1
+  # stays on the newest v1.x.y.
+  major-tag:
+    needs: build
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Move the major tag
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          major="${tag%%.*}"
+          git fetch --tags --force
+          newest=$(git tag -l "$major.*.*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          if [ "$newest" != "$tag" ]; then
+            echo "$tag is not the newest $major release, $newest is: $major stays where it is"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git tag -f -a "$major" -m "$major" "$tag^{commit}"
+          git push -f origin "refs/tags/$major"
+          echo "$major now points at $tag ($(git rev-parse --short "$tag^{commit}"))"
+
   # Rewrites Formula/cribelo.rb in cribelo/homebrew-tap so that
   # `brew install cribelo/tap/cribelo` gets this version. Pre-releases are skipped.
   # Needs the HOMEBREW_TAP_TOKEN secret: a fine-grained token with
