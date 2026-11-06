@@ -63,6 +63,7 @@ cribelo skip                 # the skipped files, with the reason
 Save this as `.github/workflows/cribelo.yml`:
 
 ```yaml
+name: cribelo
 on: pull_request
 permissions:
   contents: read
@@ -77,6 +78,27 @@ jobs:
 ```
 
 The plan is posted as a single comment and updated on each push. `fail-on: high` makes the job fail when a file reaches the high level.
+
+### Pull requests from forks
+
+GitHub runs a pull request from a fork, or from Dependabot, with a read-only token, so the job cannot comment. The plan still lands in the job summary, and in an artifact that a second workflow posts with the rights of your repository. Save it as `.github/workflows/cribelo-comment.yml`:
+
+```yaml
+on:
+  workflow_run:
+    workflows: [cribelo]
+    types: [completed]
+permissions:
+  actions: read
+  pull-requests: write
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cribelo/cribelo/comment@v1
+```
+
+This workflow checks out nothing and runs no code from the fork. It reads the plan as text, and posts it only if the pull request still points at the commit the plan was built from.
 
 ## The signals
 
