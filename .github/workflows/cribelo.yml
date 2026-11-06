@@ -1,4 +1,6 @@
-# Cribelo on this repository's own pull requests.
+# Cribelo on this repository's own pull requests, with the action of the
+# pull request itself so a change to action.yml is exercised before merge.
+name: cribelo
 on: pull_request
 permissions:
   contents: read
@@ -9,6 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: cribelo/cribelo@main
-        with:
-          version: 0.1.0-rc.1
+      - uses: ./

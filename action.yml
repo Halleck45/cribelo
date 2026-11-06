@@ -85,36 +85,66 @@ runs:
         highest=$(cribelo "${args[@]}" --format json 2>/dev/null | python3 -c '
         import json, sys
         rank = {"high": 3, "medium": 2, "low": 1}
-        levels = [f["level"] for f in json.load(sys.stdin)["files"]]
+        levels = [f["level"] for f in json.load(sys.stdin).get("files") or []]
         print(max(levels, key=lambda l: rank.get(l, 0)) if levels else "none")' || echo none)
         echo "highest=$highest" >> "$GITHUB_OUTPUT"
         cat "$out" >> "$GITHUB_STEP_SUMMARY"
         echo "status=$status" >> "$GITHUB_OUTPUT"
         [ "$status" -le 1 ] || exit "$status"
 
+    # On a pull request from a fork, or opened by Dependabot, GitHub gives the
+    # job a read-only token whatever the workflow asks for. The comment is then
+    # left to the cribelo/cribelo/comment action, run by a workflow_run
+    # workflow, which reads the plan from the artifact uploaded below.
     - name: Comment
+      id: comment
       if: inputs.comment == 'true' && github.event_name == 'pull_request'
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
         PR: ${{ github.event.pull_request.number }}
         REPO: ${{ github.repository }}
+        HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        ACTOR: ${{ github.actor }}
+        PLAN: ${{ steps.plan.outputs.path }}
+      run: |
+        set -uo pipefail
+        handoff="the plan is in the job summary and in the cribelo-plan artifact; the cribelo/cribelo/comment action posts it, see https://github.com/cribelo/cribelo#pull-requests-from-forks"
+        if [ "$HEAD_REPO" != "$REPO" ] || [ "$ACTOR" = "dependabot[bot]" ]; then
+          echo "::notice::cribelo: the token of a pull request from a fork or from Dependabot cannot comment; $handoff"
+          echo "posted=false" >> "$GITHUB_OUTPUT"
+        elif "$GITHUB_ACTION_PATH/scripts/post-comment.sh" "$REPO" "$PR" "$PLAN"; then
+          echo "posted=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::cribelo: could not comment on the pull request (does the workflow grant pull-requests: write?); $handoff"
+          echo "posted=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Prepare the plan for the comment workflow
+      if: steps.comment.outputs.posted == 'false'
+      shell: bash
+      env:
+        PR: ${{ github.event.pull_request.number }}
         PLAN: ${{ steps.plan.outputs.path }}
       run: |
         set -euo pipefail
-        marker='<!-- cribelo-plan -->'
-        { echo "$marker"; cat "$PLAN"; } > "$RUNNER_TEMP/cribelo/comment.md"
-        existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-          --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
-        if [ -n "$existing" ]; then
-          gh api -X PATCH "repos/$REPO/issues/comments/$existing" -F body=@"$RUNNER_TEMP/cribelo/comment.md" > /dev/null
-        else
-          gh api "repos/$REPO/issues/$PR/comments" -F body=@"$RUNNER_TEMP/cribelo/comment.md" > /dev/null
-        fi
+        mkdir -p "$RUNNER_TEMP/cribelo/handoff"
+        cp "$PLAN" "$RUNNER_TEMP/cribelo/handoff/plan.md"
+        echo "$PR" > "$RUNNER_TEMP/cribelo/handoff/pr"
+
+    - name: Upload the plan
+      if: steps.comment.outputs.posted == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: cribelo-plan
+        path: ${{ runner.temp }}/cribelo/handoff
+        retention-days: 7
 
     - name: Gate
       if: steps.plan.outputs.status == '1'
       shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
       run: |
-        echo "::error::cribelo: a file reached the ${{ inputs.fail-on }} level, see the plan"
+        echo "::error::cribelo: a file reached the $FAIL_ON level, see the plan"
         exit 1

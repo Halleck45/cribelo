@@ -1,0 +1,70 @@
+name: Cribelo comment
+description: Posts the plan of a cribelo run on a pull request from a fork, from a workflow_run workflow.
+author: Jean-François Lépine
+branding:
+  icon: filter
+  color: orange
+
+inputs:
+  token:
+    description: Token used to read the artifact and post the comment. Needs actions read and pull-requests write.
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    # The artifact was written by a workflow that ran the code of the fork,
+    # so its content is untrusted: the pull request number must match the
+    # commit this run built, and only regular files are read.
+    - name: Comment
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        EVENT: ${{ github.event_name }}
+        RUN_ID: ${{ github.event.workflow_run.id }}
+        RUN_EVENT: ${{ github.event.workflow_run.event }}
+        HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      run: |
+        set -euo pipefail
+        if [ "$EVENT" != workflow_run ]; then
+          echo "::error::cribelo/cribelo/comment runs from a workflow_run workflow"
+          exit 1
+        fi
+        if [ "$RUN_EVENT" != pull_request ]; then
+          echo "the triggering run was not for a pull request, nothing to post"
+          exit 0
+        fi
+
+        id=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" \
+          --jq '.artifacts[] | select(.name == "cribelo-plan" and (.expired | not)) | .id' | head -n1)
+        if [ -z "$id" ]; then
+          echo "no cribelo-plan artifact in run $RUN_ID: the plan was commented directly, or cribelo did not run"
+          exit 0
+        fi
+
+        dir="$RUNNER_TEMP/cribelo-comment"
+        rm -rf "$dir" && mkdir -p "$dir/files"
+        gh api "repos/$REPO/actions/artifacts/$id/zip" > "$dir/plan.zip"
+        unzip -q -o "$dir/plan.zip" -d "$dir/files"
+
+        for f in pr plan.md; do
+          if [ ! -f "$dir/files/$f" ] || [ -L "$dir/files/$f" ]; then
+            echo "::error::cribelo: the artifact has no regular file $f"
+            exit 1
+          fi
+        done
+
+        pr=$(head -c 32 "$dir/files/pr" | tr -d '[:space:]')
+        if ! [[ "$pr" =~ ^[0-9]{1,10}$ ]]; then
+          echo "::error::cribelo: the artifact does not hold a pull request number"
+          exit 1
+        fi
+
+        head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
+        if [ "$head" != "$HEAD_SHA" ]; then
+          echo "pull request #$pr is now at ${head:0:7}, this run built ${HEAD_SHA:0:7}: a newer run will post"
+          exit 0
+        fi
+
+        "$GITHUB_ACTION_PATH/../scripts/post-comment.sh" "$REPO" "$pr" "$dir/files/plan.md"

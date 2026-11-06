@@ -1,0 +1,14 @@
+# Posts the plan on pull requests from forks, whose token cannot comment.
+on:
+  workflow_run:
+    workflows: [cribelo]
+    types: [completed]
+permissions:
+  actions: read
+  pull-requests: write
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./comment
