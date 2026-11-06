@@ -1,21 +1,173 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="13">
-  <rect width="760" height="420" rx="10" fill="#1b1f27"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1118" height="424" viewBox="0 0 1118 424" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="13">
+  <rect width="1118" height="424" rx="10" fill="#1b1f27"/>
   <circle cx="20" cy="18" r="6" fill="#ff5f57"/><circle cx="40" cy="18" r="6" fill="#febc2e"/><circle cx="60" cy="18" r="6" fill="#28c840"/>
-  <g fill="#d6dbe5">
-    <text x="24" y="54"><tspan fill="#8a93a3">$</tspan> cribelo</text>
-    <text x="24" y="80"><tspan font-weight="bold" fill="#ffffff">cribelo</tspan> <tspan fill="#8a93a3">· 34 files changed vs origin/main (merge-base c1ef242)</tspan></text>
-    <text x="24" y="114"><tspan font-weight="bold" fill="#ffffff">Read first</tspan> <tspan fill="#8a93a3">(11 of 17) ~150 min</tspan></text>
-    <text x="40" y="136"><tspan fill="#8a93a3"> 1</tspan>  <tspan fill="#ff7b72">internal/cribelo/backtest.go</tspan>   <tspan fill="#8a93a3">new replay() complexity 25, +7 more, +456 lines, new file</tspan></text>
-    <text x="40" y="156"><tspan fill="#8a93a3"> 2</tspan>  <tspan fill="#ff7b72">internal/cribelo/plan.go</tspan>       <tspan fill="#8a93a3">new Run() complexity 35, +8 more, +363 lines, new file</tspan></text>
-    <text x="40" y="176"><tspan fill="#8a93a3"> 3</tspan>  <tspan fill="#ff7b72">internal/cribelo/clones.go</tspan>     <tspan fill="#8a93a3">new Tokenize() complexity 37, +5 more, +214 lines, new file</tspan></text>
-    <text x="40" y="196"><tspan fill="#8a93a3"> 4</tspan>  <tspan fill="#ff7b72">cmd/cribelo/main.go</tspan>            <tspan fill="#8a93a3">+244 lines, new main() complexity 24, +4 more, no test touched</tspan></text>
-    <text x="40" y="216"><tspan fill="#8a93a3"> 5</tspan>  <tspan fill="#ff7b72">internal/cribelo/git.go</tspan>        <tspan fill="#8a93a3">+404 lines, new Changes() complexity 10, +18 more, new file</tspan></text>
-    <text x="40" y="236"><tspan fill="#8a93a3"> 6</tspan>  <tspan fill="#ff7b72">internal/cribelo/features.go</tspan>   <tspan fill="#8a93a3">+205 lines, new features() complexity 23, +5 more, new file</tspan></text>
-    <text x="40" y="256" fill="#5c6675">   …</text>
-    <text x="40" y="276"><tspan fill="#8a93a3">11</tspan>  <tspan fill="#ff7b72">internal/cribelo/diff.go</tspan>       <tspan fill="#8a93a3">+179 lines, new parseHunks() complexity 9, +7 more, new file</tspan></text>
-    <text x="24" y="310"><tspan font-weight="bold" fill="#ffffff">Skip</tspan> <tspan fill="#8a93a3">(23)</tspan></text>
-    <text x="40" y="332" fill="#8a93a3">tests only 15 · ranked lower 5 · not analyzed (docs, config) 2 · no measurable change 1</text>
-    <text x="24" y="366"><tspan fill="#8a93a3">Gate:</tspan> <tspan fill="#3fb950">passed</tspan> <tspan fill="#8a93a3">(11 high, 5 medium, fail on never)</tspan></text>
-    <text x="24" y="386" fill="#5c6675">Weights: generic, not yet calibrated on this repository (run: cribelo calibrate)</text>
-  </g>
+  <text x="24.0" y="54" xml:space="preserve"><tspan fill="#8a93a3">$ </tspan><tspan fill="#d6dbe5">cribelo --base origin/main~25 --top 6</tspan></text>
+  <text x="24.0" y="80" xml:space="preserve"><tspan fill="#ffffff" font-weight="bold">cribelo</tspan><tspan fill="#8a93a3"> · 195 files changed vs origin/main~25 (merge-base 17f217b)</tspan></text>
+  <text x="24.0" y="114" xml:space="preserve"><tspan fill="#ffffff" font-weight="bold">Read 6 of 195 changed files, about 4 h 21.</tspan></text>
+  <text x="24.0" y="134" xml:space="preserve"><tspan fill="#d6dbe5">Start with internal/analyzer/community_aggregator.go: new findingsOf() complexity 103, +39 more, +2001/−756 lines, imported by 84 files.</tspan></text>
+  <text x="24.0" y="168" xml:space="preserve"><tspan fill="#8a93a3">                                                           complexity  lines       used by   commits 90d        clone  tests</tspan></text>
+  <text x="24.0" y="190" xml:space="preserve"><tspan fill="#ff7b72" font-weight="bold">  1  </tspan><tspan fill="#79c0ff">internal/analyzer/community_aggregator.go</tspan></text>
+  <rect x="484.2" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="492.0" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="499.8" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="507.6" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="515.4" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="523.2" y="190" xml:space="preserve"><tspan fill="#d6dbe5"> 103</tspan></text>
+  <rect x="577.8" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="585.6" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="593.4" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="601.2" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="609.0" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="616.8" y="190" xml:space="preserve"><tspan fill="#d6dbe5"> 2757</tspan></text>
+  <rect x="671.4" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="679.2" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="687.0" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="694.8" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="702.6" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="710.4" y="190" xml:space="preserve"><tspan fill="#d6dbe5"> 84</tspan></text>
+  <rect x="749.4" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="757.2" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="765.0" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="772.8" y="180" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="780.6" y="180" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="788.4" y="190" xml:space="preserve"><tspan fill="#d6dbe5"> 11</tspan><tspan fill="#ff7b72">, 2 fixes</tspan></text>
+  <text x="897.6" y="190" xml:space="preserve"><tspan fill="#f0883e">85%</tspan></text>
+  <text x="952.2" y="190" xml:space="preserve"><tspan fill="#3fb950">✓</tspan></text>
+  <text x="24.0" y="210" xml:space="preserve"><tspan fill="#ff7b72" font-weight="bold">  2  </tspan><tspan fill="#79c0ff">internal/analyzer/aggregator.go</tspan></text>
+  <rect x="484.2" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="492.0" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="499.8" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="507.6" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="515.4" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="523.2" y="210" xml:space="preserve"><tspan fill="#d6dbe5"> 118</tspan></text>
+  <rect x="577.8" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="585.6" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="593.4" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="601.2" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="609.0" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="616.8" y="210" xml:space="preserve"><tspan fill="#d6dbe5"> 639</tspan></text>
+  <rect x="671.4" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="679.2" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="687.0" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="694.8" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="702.6" y="200" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="710.4" y="210" xml:space="preserve"><tspan fill="#d6dbe5"> 84</tspan></text>
+  <rect x="749.4" y="200" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="757.2" y="200" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="765.0" y="200" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="772.8" y="200" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="780.6" y="200" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="788.4" y="210" xml:space="preserve"><tspan fill="#d6dbe5"> 10</tspan><tspan fill="#ff7b72">, 7 fixes</tspan></text>
+  <text x="952.2" y="210" xml:space="preserve"><tspan fill="#3fb950">✓</tspan></text>
+  <text x="24.0" y="230" xml:space="preserve"><tspan fill="#ff7b72" font-weight="bold">  3  </tspan><tspan fill="#79c0ff">internal/engine/php/tree_sitter_php_adapter.go</tspan></text>
+  <rect x="484.2" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="492.0" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="499.8" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="507.6" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="515.4" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="523.2" y="230" xml:space="preserve"><tspan fill="#d6dbe5"> 59</tspan></text>
+  <rect x="577.8" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="585.6" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="593.4" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="601.2" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="609.0" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <text x="616.8" y="230" xml:space="preserve"><tspan fill="#d6dbe5"> 853</tspan></text>
+  <rect x="671.4" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="679.2" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="687.0" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="694.8" y="220" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="702.6" y="220" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="710.4" y="230" xml:space="preserve"><tspan fill="#d6dbe5"> 19</tspan></text>
+  <rect x="749.4" y="220" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="757.2" y="220" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="765.0" y="220" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="772.8" y="220" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="780.6" y="220" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="788.4" y="230" xml:space="preserve"><tspan fill="#d6dbe5"> 9</tspan><tspan fill="#ff7b72">, 4 fixes</tspan></text>
+  <text x="952.2" y="230" xml:space="preserve"><tspan fill="#3fb950">✓</tspan></text>
+  <text x="24.0" y="250" xml:space="preserve"><tspan fill="#ff7b72" font-weight="bold">  4  </tspan><tspan fill="#79c0ff">internal/engine/csharp/tree_sitter_csharp_adapter.go</tspan></text>
+  <rect x="484.2" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="492.0" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="499.8" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="507.6" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="515.4" y="240" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="523.2" y="250" xml:space="preserve"><tspan fill="#d6dbe5"> 34</tspan></text>
+  <rect x="577.8" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="585.6" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="593.4" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="601.2" y="240" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="609.0" y="240" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="616.8" y="250" xml:space="preserve"><tspan fill="#d6dbe5"> 352</tspan></text>
+  <rect x="671.4" y="240" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="679.2" y="240" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="687.0" y="240" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="694.8" y="240" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="702.6" y="240" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="710.4" y="250" xml:space="preserve"><tspan fill="#d6dbe5"> 9</tspan></text>
+  <rect x="749.4" y="240" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="757.2" y="240" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="765.0" y="240" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="772.8" y="240" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="780.6" y="240" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="788.4" y="250" xml:space="preserve"><tspan fill="#d6dbe5"> 8</tspan><tspan fill="#ff7b72">, 3 fixes</tspan></text>
+  <text x="897.6" y="250" xml:space="preserve"><tspan fill="#f0883e">88%</tspan></text>
+  <text x="952.2" y="250" xml:space="preserve"><tspan fill="#3fb950">✓</tspan></text>
+  <text x="24.0" y="270" xml:space="preserve"><tspan fill="#ff7b72" font-weight="bold">  5  </tspan><tspan fill="#79c0ff">internal/engine/java/tree_sitter_java_adapter.go</tspan></text>
+  <rect x="484.2" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="492.0" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="499.8" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="507.6" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="515.4" y="260" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="523.2" y="270" xml:space="preserve"><tspan fill="#d6dbe5"> 30</tspan></text>
+  <rect x="577.8" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="585.6" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="593.4" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="601.2" y="260" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="609.0" y="260" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="616.8" y="270" xml:space="preserve"><tspan fill="#d6dbe5"> 325</tspan></text>
+  <rect x="671.4" y="260" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="679.2" y="260" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="687.0" y="260" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="694.8" y="260" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="702.6" y="260" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="710.4" y="270" xml:space="preserve"><tspan fill="#d6dbe5"> 10</tspan></text>
+  <rect x="749.4" y="260" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="757.2" y="260" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="765.0" y="260" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="772.8" y="260" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="780.6" y="260" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="788.4" y="270" xml:space="preserve"><tspan fill="#d6dbe5"> 7</tspan><tspan fill="#ff7b72">, 2 fixes</tspan></text>
+  <text x="897.6" y="270" xml:space="preserve"><tspan fill="#f0883e">88%</tspan></text>
+  <text x="952.2" y="270" xml:space="preserve"><tspan fill="#3fb950">✓</tspan></text>
+  <text x="24.0" y="290" xml:space="preserve"><tspan fill="#ff7b72" font-weight="bold">  6  </tspan><tspan fill="#79c0ff">internal/engine/python/tree_sitter_python_adapter.go</tspan></text>
+  <rect x="484.2" y="280" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="492.0" y="280" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="499.8" y="280" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="507.6" y="280" width="6" height="11" rx="1.5" fill="#ff7b72"/>
+  <rect x="515.4" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="523.2" y="290" xml:space="preserve"><tspan fill="#d6dbe5"> 22</tspan></text>
+  <rect x="577.8" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="585.6" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="593.4" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="601.2" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="609.0" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="616.8" y="290" xml:space="preserve"><tspan fill="#d6dbe5"> 253</tspan></text>
+  <rect x="671.4" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="679.2" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="687.0" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="694.8" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="702.6" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="710.4" y="290" xml:space="preserve"><tspan fill="#d6dbe5"> 10</tspan></text>
+  <rect x="749.4" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="757.2" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="765.0" y="280" width="6" height="11" rx="1.5" fill="#f0883e"/>
+  <rect x="772.8" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <rect x="780.6" y="280" width="6" height="11" rx="1.5" fill="#3b4252"/>
+  <text x="788.4" y="290" xml:space="preserve"><tspan fill="#d6dbe5"> 6</tspan><tspan fill="#ff7b72">, 5 fixes</tspan></text>
+  <text x="897.6" y="290" xml:space="preserve"><tspan fill="#f0883e">79%</tspan></text>
+  <text x="952.2" y="290" xml:space="preserve"><tspan fill="#3fb950">✓</tspan></text>
+  <text x="24.0" y="324" xml:space="preserve"><tspan fill="#ffffff" font-weight="bold">Skip (189)</tspan></text>
+  <text x="24.0" y="344" xml:space="preserve"><tspan fill="#d6dbe5">  tests only 85 · ranked lower 78 · not analyzed (docs, config, other languages) 13 · no measurable change 9 · deleted 2 · binary 1</tspan></text>
+  <text x="24.0" y="364" xml:space="preserve"><tspan fill="#d6dbe5">  generated 1</tspan></text>
+  <text x="24.0" y="398" xml:space="preserve"><tspan fill="#d6dbe5">Gate: </tspan><tspan fill="#3fb950">passed</tspan><tspan fill="#8a93a3"> (60 high, 12 medium, fail on never)</tspan></text>
 </svg>

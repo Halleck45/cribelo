@@ -2,7 +2,7 @@ module github.com/cribelo/cribelo
 
 go 1.25.0
 
-require github.com/ast-metrics/ast-metrics v0.43.2-0.20261105145532-d15bca65d09f
+require github.com/ast-metrics/ast-metrics v0.43.2-0.20261106144506-1ea906bbfc5c
 
 require (
 	atomicgo.dev/cursor v0.2.0 // indirect

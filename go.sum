@@ -15,8 +15,8 @@ github.com/MarvinJWendt/testza v0.3.0/go.mod h1:eFcL4I0idjtIx8P9C6KkAuLgATNKpX4/
 github.com/MarvinJWendt/testza v0.4.2/go.mod h1:mSdhXiKH8sg/gQehJ63bINcCKp7RtYewEjXsvsVUPbE=
 github.com/MarvinJWendt/testza v0.5.2 h1:53KDo64C1z/h/d/stCYCPY69bt/OSwjq5KpFNwi+zB4=
 github.com/MarvinJWendt/testza v0.5.2/go.mod h1:xu53QFE5sCdjtMCKk8YMQ2MnymimEctc4n3EjyIYvEY=
-github.com/ast-metrics/ast-metrics v0.43.2-0.20261105145532-d15bca65d09f h1:G+ITOcUWSKCJkHLb9Iwt/iEDC5Hqsvqq2VlhB81mFBk=
-github.com/ast-metrics/ast-metrics v0.43.2-0.20261105145532-d15bca65d09f/go.mod h1:1YkSlw8QO3h/Zitbtcgi7eAP5fprH44qh6d466sXJXc=
+github.com/ast-metrics/ast-metrics v0.43.2-0.20261106144506-1ea906bbfc5c h1:PsRxJqMnfRj22MT2pbDTabWRpF2aMGQf+reB1ZuxqaY=
+github.com/ast-metrics/ast-metrics v0.43.2-0.20261106144506-1ea906bbfc5c/go.mod h1:1YkSlw8QO3h/Zitbtcgi7eAP5fprH44qh6d466sXJXc=
 github.com/atomicgo/cursor v0.0.1/go.mod h1:cBON2QmmrysudxNBFthvMtN32r3jxVRIvzkUiF/RuIk=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
