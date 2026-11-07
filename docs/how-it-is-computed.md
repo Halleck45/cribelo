@@ -1,6 +1,6 @@
 # How it is computed
 
-Cribelo ranks the files of a change by one number, the probability that a human should read them. This page gives every step that produces that number, so that you can contest it. Methodology version 1.1; the version is bumped whenever a signal, a transform or a default weight changes, and a weights file from another version is ignored.
+Cribelo draws the reading map of a change in three passes: each hunk gets a nature and the lines left to read are counted; facts about the structure are checked against the graphs and the history of the repository; the files are grouped by dependency and ordered. A score, the probability that a human should read a file, settles the order where the dependencies leave a choice. This page gives every step, so that you can contest it. Methodology version 1.1; the version is bumped whenever a signal, a transform or a default weight changes, and a weights file from another version is ignored.
 
 ## The change
 
@@ -23,6 +23,47 @@ Some files never get a score. They are listed under Skip with their label.
 | no measurable change | parsed, but every signal below is zero |
 
 Globs in the `ignore` list of `.cribelo.yaml` are dropped before anything else.
+
+## Hunks
+
+Every hunk of the diff, a block of added and removed lines, gets one nature. The first rule that applies wins.
+
+| Nature | Rule |
+|---|---|
+| moved | every added line sits in a function that arrived from elsewhere, and exists in the function it came from; every removed line sits in a function that left, and exists where it went |
+| extracted | every added line sits in a function cut out of one that shrank |
+| rename | the hunk differs from its removed lines by a consistent `old → new` mapping of identifiers; the old name is gone from the file after the change, the new one was absent before, and the same pair appears in at least two hunks of the change |
+| format | the tokens of the removed and added lines are the same, whitespace aside |
+| comment | the lines differ only by comments |
+| imports | every line is an import statement of the language, or its continuation |
+| behavior | everything else |
+
+A moved function is one that left a file and arrived in another, or in the same file: the body (the declaration left out) has the same tokens, or the same tokens once identifiers are normalized, or at least 80 % of the same fingerprints, the fingerprints of the clone check with a window of twenty tokens. Bodies under twelve tokens are never matched: accessors look alike by construction. An extraction is a new function whose fingerprints are at least 80 % contained in a function that shrank by a fifth or more, and under 50 % contained in what remains of it. This follows RefDiff (Silva and Valente, 2017), which matches refactorings on token similarity without types.
+
+The lines to read of a file are the lines of its behavior hunks, plus one line per rename hunk and two per move or extraction, enough to glance at them. A file whose every hunk is mechanical is listed under Skip with its reason (moved code only, renames only, formatting only...) and never enters the reading list, whatever its score. The reading time is twenty lines to read a minute.
+
+## Facts
+
+A fact is something the diff does not show and a reader can check in a minute. None is a prediction: each is true by construction of what it is computed on. At most one fact of each kind per file.
+
+| Fact | Computation |
+|---|---|
+| introduces a cycle | the import graph of the repository after the change holds a path from a new dependency of the file back to the file; the shortest such path is shown |
+| depends on a module for the first time | a new dependency of the file points to a directory no file of the file's directory depended on before the change; a directory that did not exist before says nothing |
+| first use of a library | the file imports a module that resolves to no file of the repository, that no file imported before the change, that is not part of the language's standard library, and whose first segment is not a directory next to or above the file (a path alias) |
+| went from N to M parameters | an exported function exists in both versions with a different number of parameters, or different types when the parser gives them; renaming a parameter is not a change |
+| called from N files | the files that hold the function's name followed by a parenthesis and depend on the file in the graph, or sit in its directory; when the graph knows no dependent of the file, every file holding the name counts and the fact says "by name" |
+| new exported functions called nowhere yet | exported functions the change adds, outside the entry points a runtime calls (`main`, `init`, constructors, `String`...), whose name no other file calls |
+| similar to a function the change does not touch | the clone of a touched function, when the clone's file is not in the change |
+| fixed N times in the past year | `git log -L` on the lines of the function in the base version, over the twelve months before the change; commits recognized as fixes with the rules of the backtest, reverts counted apart; asked for at most twelve functions, the most complex first, of the files to read; stated from two fixes |
+
+Exported means: an uppercase initial in Go, no leading underscore in Python, `public` or no visibility keyword in PHP, `export` in TypeScript, `pub` in Rust, `public` in Java and C#.
+
+The graph before the change is the graph of the repository after it, with the base version of every changed file standing in for its head version, the deleted files back and the new ones gone. Test files are left out of both graphs.
+
+## Reading order
+
+The files of the reading list are grouped. Two files are in one group when one depends on the other in the import graph, or, in one directory, when one calls a function the other declares. Within a group, a file comes before the files that use it; a cycle is broken on the best score. Each test file of the change is placed right after the file it exercises: the file whose name the test is built on (`invoice_test.go`, `test_token.py`, `SessionTest.php`, `button.test.tsx`), or a file of its directory when no changed file carries its name. Groups come in this order: those carrying a cycle, a signature change, a function with a fix record, a first dependency or a clone first; then by their best score; then by size.
 
 ## Ten signals
 
@@ -71,7 +112,7 @@ Default weights:
 
 A score of 0.70 or more is high, 0.40 or more is medium, below is low. The thresholds are stored with the weights. The files are sorted by score; ties are broken deterministically, so the same change always gives the same order.
 
-The reading list is every file at the high level, and at least `top` files (three by default, also a key of `.cribelo.yaml`). `--top N` on the command line reads exactly N files. `--budget` reads as many files as fit in the given time at twenty changed lines a minute, and overrides both. The list is never empty when a code file was ranked. The reasons printed next to a file are its three largest positive contributions.
+The reading list is every file at the high level, and at least `top` files (three by default, also a key of `.cribelo.yaml`), files whose every hunk is mechanical left out. `--top N` on the command line reads exactly N files. `--budget` reads as many files as fit in the given time at twenty lines to read a minute, and overrides both. The list is never empty when a code file with a behavior hunk was ranked. The reasons printed next to a file are its three largest positive contributions.
 
 `cribelo explain <file>` prints every value and contribution of one file.
 

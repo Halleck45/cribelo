@@ -11,33 +11,54 @@
 
 # Cribelo
 
-Cribelo ranks the files of a pull request by how much they need a human reader, and says why. The name is the Latin *cribellum*, a small sieve.
+Cribelo draws the reading map of a pull request: how many lines are left to read once moves, renames, formatting and imports are set aside, what the diff does not show about the structure of the code, and in which order to read the files. It says why at every step. The name is the Latin *cribellum*, a small sieve.
 
 ```
-$ cribelo --base origin/main~25 --top 6
-cribelo · 195 files changed vs origin/main~25 (merge-base 17f217b)
+$ cribelo --base main
+cribelo · 26 files changed vs main (merge-base b7e2b04)
 
-Read 6 of 195 changed files, about 4 h 21.
-Start with internal/analyzer/community_aggregator.go: new findingsOf() complexity 103, +39 more, +2001/−756 lines, imported by 84 files.
+Read 17 of 26 changed files, about 2 h 30.
+2409 of 2456 changed lines to read: 8 comment hunks, 7 import hunks.
+Start with internal/cribelo/history.go: +131 lines, new historyFacts() complexity 20, +1 more.
 
-                                                           complexity  lines       used by   commits 90d        clone  tests
-  1  internal/analyzer/community_aggregator.go             ▮▮▮▮▮ 103   ▮▮▮▮▮ 2757  ▮▮▮▮▮ 84  ▮▮▮▮▯ 11, 2 fixes  85%    ✓
-  2  internal/analyzer/aggregator.go                       ▮▮▮▮▮ 118   ▮▮▮▮▮ 639   ▮▮▮▮▮ 84  ▮▮▮▯▯ 10, 7 fixes         ✓
-  3  internal/engine/php/tree_sitter_php_adapter.go        ▮▮▮▮▮ 59    ▮▮▮▮▮ 853   ▮▮▮▮▯ 19  ▮▮▮▯▯ 9, 4 fixes          ✓
-  4  internal/engine/csharp/tree_sitter_csharp_adapter.go  ▮▮▮▮▯ 34    ▮▮▮▮▯ 352   ▮▮▮▯▯ 9   ▮▮▮▯▯ 8, 3 fixes   88%    ✓
-  5  internal/engine/java/tree_sitter_java_adapter.go      ▮▮▮▮▯ 30    ▮▮▮▮▯ 325   ▮▮▮▯▯ 10  ▮▮▮▯▯ 7, 2 fixes   88%    ✓
-  6  internal/engine/python/tree_sitter_python_adapter.go  ▮▮▮▮▯ 22    ▮▮▮▯▯ 253   ▮▮▮▯▯ 10  ▮▮▮▯▯ 6, 5 fixes   79%    ✓
+                                                   complexity  to read           used by    commits 90d       tests
+      ↳ history.go, then what uses it
+   1  internal/cribelo/history.go            new   ▮▮▮▯▯ 20    ▮▮▯▯▯ 131         ▮▯▯▯▯ 1    ▮▯▯▯▯ 1, 1 fix    ✓
+   2  internal/cribelo/clones.go                   ▮▮▮▮▯ 39    ▮▯▯▯▯ 36          ▮▯▯▯▯ 1    ▮▯▯▯▯ 2           ✓
+   3  internal/cribelo/order.go              new   ▮▮▮▮▮ 48    ▮▮▮▮▯ 350         ▮▯▯▯▯ 1    ▮▯▯▯▯ 2, 1 fix    ✓
+   4  internal/cribelo/order_test.go         test  ▮▯▯▯▯ 2     ▮▮▮▯▯ 158         ▯▯▯▯▯      ▮▯▯▯▯ 2
+   5  internal/cribelo/facts.go              new   ▮▮▮▯▯ 19    ▮▮▮▮▯ 475         ▮▯▯▯▯ 1    ▮▮▯▯▯ 4, 1 fix    ✓
+   6  internal/cribelo/facts_test.go         test  ▮▯▯▯▯ 3     ▮▮▮▯▯ 159         ▯▯▯▯▯      ▮▮▯▯▯ 3, 1 fix
+   ...
+  10  internal/cribelo/plan.go                     ▮▮▮▮▮ 49    ▮▮▯▯▯ 100 of 118  ▮▯▯▯▯ 1    ▮▮▮▯▯ 7, 2 fixes  ✓
+   ...
+  16  internal/cribelo/describe.go           new   ▮▮▮▮▯ 23    ▮▮▯▯▯ 91          ▮▯▯▯▯ 1    ▮▯▯▯▯ 1           ✓
 
-Skip (189)
-  tests only 85 · ranked lower 78 · not analyzed (docs, config, other languages) 13 · no measurable change 9 · deleted 2 · binary 1 · generated 1    cribelo skip
+  17  internal/engine/util.go                      ▮▮▮▮▯ 35    ▮▯▯▯▯ 42 of 53    ▮▮▮▮▮ 113  ▮▮▮▯▯ 7, 3 fixes  ✗
 
-Gate: passed (60 high, 12 medium, fail on never)
+Skip (9)
+  ranked lower 6 · tests only 2 · no measurable change 1    cribelo skip
+
+Gate: passed (11 high, 4 medium, fail on never)
 Weights: generic, not yet calibrated on this repository (run: cribelo calibrate)
 ```
 
-The reading list holds every file at the high level, and at least three. A small change gets three files; a change with twenty risky files gets twenty, because that is what it has. `--budget 15m` caps the list to what fits in the time you have, `--top 5` forces a count.
+Three things happen here.
 
-The ranking rests on static analysis of the code before and after the change, and on the git history of each file. On the analysis side: the cyclomatic complexity added by the functions you touched, the most complex of those functions, the afferent coupling of the file (how many files outside its own directory import it), whether a touched function is a clone of another function in the project, and whether a test was changed along with it. On the git side: how often the file was committed in the last ninety days, and how many of those commits were fixes. This is just-in-time defect prediction, the approach described by Kamei et al. in 2013, with the metrics of a real parser instead of the size of the diff alone.
+Every hunk of the diff gets a nature. A function that left one file and arrived in another is a move; a block cut out of a function that shrank is an extraction; a consistent `oldName → newName` across the change is a rename; the rest is formatting, comments, imports, or a change of behavior. The "to read" column counts the lines of behavior, and a file whose every hunk is mechanical is set aside with its reason, to check in a glance rather than read.
+
+The files to read are grouped by dependency, the file the others use first, each test right after the file it exercises. A reader who knows what a function does before meeting its callers finds more, and gets tired later.
+
+When there is something to say, a "Worth knowing" block states what the diff cannot show and a reader can check in a minute:
+
+```
+Worth knowing  true by construction, not predicted
+  tsdb/chunkenc/histogram_st.go  appendable() is 100% similar to tsdb/chunkenc/histogram.go:appendable(), which this change does not touch
+```
+
+A dependency cycle the change introduces, a module depending on another for the first time, a library nobody used before, an exported function whose parameters changed and the files calling it, a new export nothing calls yet, a touched function that is a clone of one the change leaves alone, a function fixed several times this year. None of these is a prediction. Each is true by construction of the graphs and the history it comes from, and Cribelo shows at most a handful.
+
+Within a group, the order falls back on a score: the cyclomatic complexity added by the touched functions, the most complex of them, how many files import the file, whether a touched function is a clone, whether a test changed with it, how often the file was committed in the last ninety days and how many of those commits were fixes. The reading list holds every file at the high level, and at least three. `--budget 15m` caps it to what fits in the time you have, `--top 5` forces a count.
 
 Everything runs locally from the git checkout. There is no service, no account and no language model, and the same change gives the same plan on every machine.
 
@@ -54,9 +75,12 @@ cribelo                      # plan for the working tree against the default bra
 cribelo --base origin/develop
 cribelo --budget 15m         # as many files as fit in fifteen minutes
 cribelo --top 5              # exactly five files
-cribelo explain path/to/file # every signal behind one file
+cribelo explain path/to/file # every signal, hunk and fact behind one file
 cribelo skip                 # the skipped files, with the reason
+cribelo describe             # the structural summary, in Markdown, for the pull request description
 ```
+
+`cribelo describe` prints what the author of the change rarely writes down and the reviewer always wants: the signatures that changed and who calls them, what moved where, the share of mechanical lines, and the suggested reading order. Paste it into the description.
 
 ## In a pull request
 
@@ -99,6 +123,20 @@ jobs:
 ```
 
 This workflow checks out nothing and runs no code from the fork. It reads the plan as text, and posts it only if the pull request still points at the commit the plan was built from.
+
+## The facts
+
+| Fact | How it is established |
+|---|---|
+| introduces a cycle | the import graph of the repository after the change holds a path back from a new dependency to the file |
+| depends on a module for the first time | no file of the directory imported a file of the other directory before the change |
+| first use of a library | no file of the repository imported that module before the change |
+| changed its parameters, called from N files | the parameter list of an exported function differs between the two versions; callers are counted by name |
+| new exported functions called nowhere yet | exported functions the change adds whose name no other file calls |
+| similar to a function the change does not touch | the clone index, when the twin is not in the change |
+| fixed N times in the past year | `git log -L` on the function's lines in the base version, fixes recognized as in the backtest |
+
+Exported means uppercase in Go, no leading underscore in Python, `public` or absent visibility in PHP, `export` in TypeScript, `pub` in Rust, `public` in Java and C#. A caller is counted when a file holds the function's name followed by a parenthesis, so the count is an upper bound in the languages where a name is not a symbol.
 
 ## The signals
 
