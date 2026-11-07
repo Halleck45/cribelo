@@ -30,7 +30,7 @@ Every hunk of the diff, a block of added and removed lines, gets one nature. The
 
 | Nature | Rule |
 |---|---|
-| moved | every added line sits in a function that arrived from elsewhere, and exists in the function it came from; every removed line sits in a function that left, and exists where it went |
+| moved | at least half of the lines sit in a function that arrived from elsewhere and exist, identifiers aside, in the function it came from, or sit in a function that left and exist where it went. The other lines, code around the moved functions or edited on the way, are counted as new and read. A line that names something the original function never named is new too, unless the change renamed that thing everywhere |
 | extracted | every added line sits in a function cut out of one that shrank |
 | rename | the hunk differs from its removed lines by a consistent `old → new` mapping of identifiers; the old name is gone from the file after the change, the new one was absent before, and the same pair appears in at least two hunks of the change |
 | format | the tokens of the removed and added lines are the same, whitespace aside |
@@ -40,7 +40,7 @@ Every hunk of the diff, a block of added and removed lines, gets one nature. The
 
 A moved function is one that left a file and arrived in another, or in the same file: the body (the declaration left out) has the same tokens, or the same tokens once identifiers are normalized, or at least 80 % of the same fingerprints, the fingerprints of the clone check with a window of twenty tokens. Bodies under twelve tokens are never matched: accessors look alike by construction. An extraction is a new function whose fingerprints are at least 80 % contained in a function that shrank by a fifth or more, and under 50 % contained in what remains of it. This follows RefDiff (Silva and Valente, 2017), which matches refactorings on token similarity without types.
 
-The lines to read of a file are the lines of its behavior hunks, plus one line per rename hunk and two per move or extraction, enough to glance at them. A file whose every hunk is mechanical is listed under Skip with its reason (moved code only, renames only, formatting only...) and never enters the reading list, whatever its score. The reading time is twenty lines to read a minute.
+The lines to read of a file are the lines of its behavior hunks, plus one line per rename hunk and two per move or extraction, enough to glance at them, plus the new lines of a move. A file whose every hunk is mechanical and brought no new line is listed under Skip with its reason (moved code only, renames only, formatting only...) and never enters the reading list, whatever its score. The reading time is twenty lines to read a minute.
 
 ## Facts
 
