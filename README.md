@@ -56,7 +56,7 @@ Worth knowing  true by construction, not predicted
   tsdb/chunkenc/histogram_st.go  appendable() is 100% similar to tsdb/chunkenc/histogram.go:appendable(), which this change does not touch
 ```
 
-A dependency cycle the change introduces, a module depending on another for the first time, a library nobody used before, an exported function whose parameters changed and the files calling it, a new export nothing calls yet, a touched function that is a clone of one the change leaves alone, a function fixed several times this year. None of these is a prediction. Each is true by construction of the graphs and the history it comes from, and Cribelo shows at most a handful.
+A dependency cycle the change introduces, a module depending on another for the first time, a library nobody used before, an exported function whose parameters changed and the files calling it, a new export nothing calls yet, a touched function that is a clone of one the change leaves alone, a function fixed several times this year, changed lines that no test runs when a coverage report is around. None of these is a prediction. Each is true by construction of the graphs and the history it comes from, and Cribelo shows at most a handful.
 
 Within a group, the order falls back on a score: the cyclomatic complexity added by the touched functions, the most complex of them, how many files import the file, whether a touched function is a clone, whether a test changed with it, how often the file was committed in the last ninety days and how many of those commits were fixes. The reading list holds every file at the high level, and at least three. `--budget 15m` caps it to what fits in the time you have, `--top 5` forces a count.
 
@@ -135,6 +135,7 @@ This workflow checks out nothing and runs no code from the fork. It reads the pl
 | new exported functions called nowhere yet | exported functions the change adds whose name no other file calls |
 | similar to a function the change does not touch | the clone index, when the twin is not in the change |
 | fixed N times in the past year | `git log -L` on the function's lines in the base version, fixes recognized as in the backtest |
+| changed lines not run by any test | a coverage report found at the root (lcov, Cobertura, Clover or a Go profile), or given with `--coverage` |
 
 Exported means uppercase in Go, no leading underscore in Python, `public` or absent visibility in PHP, `export` in TypeScript, `pub` in Rust, `public` in Java and C#. A caller is counted when a file holds the function's name followed by a parenthesis, so the count is an upper bound in the languages where a name is not a symbol.
 
@@ -193,6 +194,7 @@ These figures are from the AST Metrics repository. A fix commit touching a file 
 base: origin/develop
 top: 3                      # the least number of files to read
 fail_on: never              # high, medium or never
+coverage: coverage/lcov.info  # report to read the untested changed lines from; none to skip
 ignore:
   - "migrations/**"
   - "*.generated.go"

@@ -56,6 +56,7 @@ A fact is something the diff does not show and a reader can check in a minute. N
 | new exported functions called nowhere yet | exported functions the change adds, outside the entry points a runtime calls (`main`, `init`, constructors, `String`...), whose name no other file calls |
 | similar to a function the change does not touch | the clone of a touched function, when the clone's file is not in the change |
 | fixed N times in the past year | `git log -L` on the lines of the function in the base version, over the twelve months before the change; commits recognized as fixes with the rules of the backtest, reverts counted apart; asked for at most twelve functions, the most complex first, of the files to read; stated from two fixes |
+| changed lines not run by any test | among the lines of the file's hunks that a coverage report instruments, those with no hit; the report is `coverage.out`, `lcov.info`, `coverage.xml`, `clover.xml` or a few other usual names at the root or under `coverage/`, else the `coverage` key of `.cribelo.yaml` or `--coverage`; lcov, Cobertura, Clover and Go profiles are read, Go import paths mapped through `go.mod`; the report is read as the last test run left it |
 
 Exported means: an uppercase initial in Go, no leading underscore in Python, `public` or no visibility keyword in PHP, `export` in TypeScript, `pub` in Rust, `public` in Java and C#.
 
