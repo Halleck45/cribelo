@@ -52,7 +52,7 @@ The lines left are split in two. A line is glanced at rather than read when:
 
 Everything else is read closely: a function that gained a decision, a function that stays complex, a conditional at the top level. A hunk that spans several functions is split line by line, the innermost function taking a nested line. The reading time is twenty lines read closely a minute and sixty glanced at.
 
-The rule was chosen on the bench, over the touched functions of the replayed changes, with the lines later repaired by a fix (SZZ) as the label: functions that gained no decision and stay at complexity 3 or below were repaired about half as often as the others, whatever the number of files depending on theirs. The reach of a file (its afferent coupling) did not help: functions in files nobody depends on were repaired more often, not less. See the numbers in the bench report.
+The rule was chosen on the bench, over the touched functions of the last 1,500 landings of twenty-eight repositories, with the lines a later fix repaired (SZZ) as the label. Among 130,998 touched functions, those that gained no decision and ended at complexity 3 or below were repaired 1.3 % of the time, the others 2.8 %; the repair rate climbs with every decision gained, up to 7.3 % for functions that gained three or more and ended above 10. The reach of a file (its afferent coupling) did not help: functions in files no other file imports were repaired more often (2.5 %) than functions in files imported by twenty or more (1.4 %). A third of the functions repaired later sit in what the rule glances at: a glance is a fast read, not a skip.
 
 ## Facts
 
