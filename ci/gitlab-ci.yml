@@ -1,0 +1,85 @@
+# Cribelo on GitLab merge requests. Include it from .gitlab-ci.yml:
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/cribelo/cribelo/v2/ci/gitlab-ci.yml
+#
+# The plan lands in the job log and in the "cribelo plan" artifact linked from
+# the merge request. With a CRIBELO_TOKEN variable (a project access token,
+# api scope, Reporter role) it is also posted as one note, updated on each push.
+# Options are variables: CRIBELO_BUDGET, CRIBELO_TOP, CRIBELO_FAIL_ON,
+# CRIBELO_FAIL_OVER, CRIBELO_VERSION. They mean what the GitHub Action inputs mean.
+
+cribelo:
+  stage: test
+  # The Linux binary is built with cgo against glibc 2.34: no Alpine.
+  image: debian:bookworm-slim
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    GIT_DEPTH: "0"
+    CRIBELO_VERSION: latest
+  script:
+    - |
+      # GitLab starts bash with set -e, the exit status of cribelo is read below.
+      set +e -uo pipefail
+      apt-get update -qq >/dev/null && apt-get install -y -qq --no-install-recommends ca-certificates curl git jq >/dev/null
+
+      case "$(uname -m)" in x86_64) arch=x86_64 ;; aarch64|arm64) arch=arm64 ;; *) echo "unsupported arch"; exit 1 ;; esac
+      if [ "$CRIBELO_VERSION" = latest ]; then
+        url="https://github.com/cribelo/cribelo/releases/latest/download/cribelo_Linux_${arch}"
+      else
+        url="https://github.com/cribelo/cribelo/releases/download/v${CRIBELO_VERSION#v}/cribelo_Linux_${arch}"
+      fi
+      curl -fsSL "$url" -o /usr/local/bin/cribelo && chmod +x /usr/local/bin/cribelo || exit 1
+
+      git config --global --add safe.directory "$CI_PROJECT_DIR"
+      base="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      git fetch --no-tags origin "+refs/heads/$base:refs/remotes/origin/$base" || exit 1
+
+      args=(--base "origin/$base" --no-color)
+      [ -n "${CRIBELO_FAIL_ON:-}" ] && args+=(--fail-on "$CRIBELO_FAIL_ON")
+      [ -n "${CRIBELO_FAIL_OVER:-}" ] && args+=(--fail-over "$CRIBELO_FAIL_OVER")
+      if [ -n "${CRIBELO_BUDGET:-}" ]; then args+=(--budget "$CRIBELO_BUDGET"); elif [ -n "${CRIBELO_TOP:-}" ]; then args+=(--top "$CRIBELO_TOP"); fi
+
+      # Written outside the checkout, or cribelo would count it as a changed file.
+      plan=$(mktemp)
+      cribelo "${args[@]}" --format markdown > "$plan"; status=$?
+      cat "$plan"
+      [ "$status" -le 1 ] || exit "$status"
+      [ "$status" -eq 0 ] || reasons=$(cribelo "${args[@]}" --format json 2>/dev/null | jq -r '(.gate_reasons // []) | join("; ")')
+      cp "$plan" cribelo-plan.md
+
+      # One note per merge request, found again by its marker and its author:
+      # anyone can write the marker, only this token's user is trusted.
+      if [ -n "${CRIBELO_TOKEN:-}" ]; then
+        marker='<!-- cribelo-plan -->'
+        api="$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
+        auth="PRIVATE-TOKEN: $CRIBELO_TOKEN"
+        if me=$(curl -fsS -H "$auth" "$CI_API_V4_URL/user" | jq -er .id); then
+          existing=""
+          for page in $(seq 1 50); do
+            notes=$(curl -fsS -H "$auth" "$api?per_page=100&page=$page&sort=asc") || break
+            [ "$(jq length <<<"$notes")" -gt 0 ] || break
+            existing=$(jq -r --argjson me "$me" --arg m "$marker" '[.[] | select(.author.id == $me and (.body | startswith($m)))][0].id // empty' <<<"$notes")
+            [ -z "$existing" ] || break
+          done
+          note=$(mktemp)
+          head -c 60000 "$plan" | jq -Rs --arg m "$marker" '{body: ($m + "\n" + .)}' > "$note"
+          if [ -n "$existing" ]; then
+            curl -fsS -X PUT -H "$auth" -H 'Content-Type: application/json' --data @"$note" "$api/$existing" >/dev/null
+          else
+            curl -fsS -X POST -H "$auth" -H 'Content-Type: application/json' --data @"$note" "$api" >/dev/null
+          fi || echo "cribelo: could not post the note (does CRIBELO_TOKEN have the api scope and the Reporter role?)"
+        else
+          echo "cribelo: CRIBELO_TOKEN was refused, the plan is in the artifact"
+        fi
+      fi
+
+      if [ "$status" -eq 1 ]; then
+        echo "cribelo: gate failed: ${reasons:-see the plan}"
+        exit 1
+      fi
+  artifacts:
+    when: always
+    expose_as: cribelo plan
+    paths: [cribelo-plan.md]
