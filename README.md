@@ -7,7 +7,7 @@
 
 <h3 align="center">What to read, what to skip.</h3>
 
-<p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 195 files changed, six to read first, each with bars for complexity, lines changed, coupling and recent commits, the share of a duplicate and a test mark, 189 skipped" width="900"></p>
+<p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 34 files changed, 13 to read in about 45 minutes, 1035 of 1771 lines to read closely and 369 to glance at, each file with bars for complexity, lines to read, lines to glance at, coupling and recent commits, then the facts and 20 skipped files" width="900"></p>
 
 # Cribelo
 
@@ -17,7 +17,7 @@ Cribelo draws the reading map of a pull request: how many lines are left to read
 $ cribelo --base origin/main
 cribelo · 34 files changed vs origin/main (merge-base b2f83dc)
 
-Read 14 of 34 changed files, about 48 min.
+Read 13 of 34 changed files, about 45 min.
 1035 of 1771 changed lines to read closely, 369 to glance at: 11 import hunks.
 Start with internal/analyzer/library_reach.go: +266 lines, new LibraryUses() complexity 17, +4 more, imported by 83 files.
 
@@ -29,20 +29,20 @@ Start with internal/analyzer/library_reach.go: +266 lines, new LibraryUses() com
    4  internal/engine/util.go                              ▮▮▯▯▯ 10    ▮▯▯▯▯ 27 of 32    ▮▯▯▯▯ 2   ▮▮▮▮▮ 111  ▮▮▮▯▯ 6, 3 fixes          ✗
    5  internal/analyzer/file_dependency_analyzer.go        ▮▮▮▮▮ 44    ▮▮▯▯▯ 53 of 67    ▮▯▯▯▯ 3   ▮▮▮▮▮ 83   ▮▮▯▯▯ 4, 1 fix            ✓
    6  internal/engine/php/deps/resolver.go           new   ▮▮▯▯▯ 9     ▮▯▯▯▯ 23 of 77    ▮▯▯▯▯ 27  ▮▯▯▯▯ 1    ▮▯▯▯▯ 1            84%    ✓
-  ...
-  14  internal/analyzer/community_graph.go                 ▮▮▮▮▮ 51    ▮▯▯▯▯ 12 of 18    ▮▯▯▯▯ 2   ▮▮▮▮▮ 83   ▮▯▯▯▯ 2                   ✓
+  …
+  13  internal/analyzer/community_graph.go                 ▮▮▮▮▮ 51    ▮▯▯▯▯ 12 of 18    ▮▯▯▯▯ 2   ▮▮▮▮▮ 83   ▮▯▯▯▯ 2                   ✓
 
 Worth knowing  true by construction, not predicted
-  cmd/ast-metrics/main.go  main() was fixed 5 times in the past year
   internal/analyzer/aggregator.go  internal/analyzer depends on internal/engine/php/deps for the first time
   internal/engine/typescript/deps/resolver.go  internal/engine/typescript/deps depends on internal/engine/typescript/module for the first time
-  cmd/ast-metrics/main.go  38 of 38 changed lines not run by any test, by pr196-coverage.out
   internal/analyzer/library_reach.go  15 of 161 changed lines not run by any test, by pr196-coverage.out
   internal/command/who_uses_command.go  49 of 162 changed lines not run by any test, by pr196-coverage.out
-  +1 more, see cribelo explain <file>
+  internal/engine/util.go  25 of 25 changed lines not run by any test, by pr196-coverage.out
 
-Skip (20)
-  ranked lower 9 · tests only 7 · no measurable change 4    cribelo skip
+Skip (21)
+  ranked lower 10 · tests only 7 · no measurable change 4    cribelo skip
+
+Weights: generic, not yet calibrated on this repository (run: cribelo calibrate)
 ```
 
 Three things happen here.
