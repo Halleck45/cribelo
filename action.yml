@@ -1,5 +1,5 @@
 name: Cribelo
-description: The reading map of a pull request, what to read, in which order, what the diff does not show. Posts the plan as one comment, updated on every push.
+description: "The reading map of a pull request: what to read, in which order, and what the diff does not show."
 author: Jean-François Lépine
 branding:
   icon: filter
