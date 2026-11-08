@@ -100,13 +100,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: cribelo/cribelo@v1
+      - uses: cribelo/cribelo@v2
 ```
 
 The plan is posted as a single comment and updated on each push. The job never fails on the content of the change unless you ask for a gate:
 
 ```yaml
-      - uses: cribelo/cribelo@v1
+      - uses: cribelo/cribelo@v2
         with:
           fail-over: 1h
           fail-on: cycle, signature
