@@ -130,7 +130,7 @@ jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
-      - uses: cribelo/cribelo/comment@v1
+      - uses: cribelo/cribelo/comment@v2
 ```
 
 This workflow checks out nothing and runs no code from the fork. It reads the plan as text, and posts it only if the pull request still points at the commit the plan was built from.
