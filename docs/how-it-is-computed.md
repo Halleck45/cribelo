@@ -1,6 +1,6 @@
 # How it is computed
 
-Cribelo ranks the files of a change by one number, the probability that a human should read them. This page gives every step that produces that number, so that you can contest it. Methodology version 1.1; the version is bumped whenever a signal, a transform or a default weight changes, and a weights file from another version is ignored.
+Cribelo draws the reading map of a change in three passes: each hunk gets a nature and the lines left are counted, those to read closely apart from those to glance at; facts about the structure are checked against the graphs and the history of the repository; the files are grouped by dependency and ordered. A score, the probability that a human should read a file, settles the order where the dependencies leave a choice. This page gives every step, so that you can contest it. Methodology version 1.1; the version is bumped whenever a signal, a transform or a default weight changes, and a weights file from another version is ignored.
 
 ## The change
 
@@ -23,6 +23,60 @@ Some files never get a score. They are listed under Skip with their label.
 | no measurable change | parsed, but every signal below is zero |
 
 Globs in the `ignore` list of `.cribelo.yaml` are dropped before anything else.
+
+## Hunks
+
+Every hunk of the diff, a block of added and removed lines, gets one nature. The first rule that applies wins.
+
+| Nature | Rule |
+|---|---|
+| moved | at least half of the lines sit in a function that arrived from elsewhere and exist, identifiers aside, in the function it came from, or sit in a function that left and exist where it went. The other lines, code around the moved functions or edited on the way, are counted as new and read. A line that names something the original function never named is new too, unless the change renamed that thing everywhere |
+| extracted | every added line sits in a function cut out of one that shrank |
+| rename | the hunk differs from its removed lines by a consistent `old → new` mapping of identifiers; the old name is gone from the file after the change, the new one was absent before, and the same pair appears in at least two hunks of the change |
+| format | the tokens of the removed and added lines are the same, whitespace aside |
+| comment | the lines differ only by comments |
+| imports | every line is an import statement of the language, or its continuation |
+| behavior | everything else |
+
+A moved function is one that left a file and arrived in another, or in the same file: the body (the declaration left out) has the same tokens, or the same tokens once identifiers are normalized, or at least 80 % of the same fingerprints, the fingerprints of the clone check with a window of twenty tokens. Bodies under twelve tokens are never matched: accessors look alike by construction. An extraction is a new function whose fingerprints are at least 80 % contained in a function that shrank by a fifth or more, and under 50 % contained in what remains of it. This follows RefDiff (Silva and Valente, 2017), which matches refactorings on token similarity without types.
+
+The lines left of a file are the code lines of its behavior hunks (a line is left out when it is blank, starts with a comment marker, or is an import statement of the language), plus one line per rename hunk and two per move or extraction, plus the new lines of a move. A file whose every hunk is mechanical and brought no new line is listed under Skip with its reason (moved code only, renames only, formatting only...) and never enters the reading list, whatever its score.
+
+### Read closely or glance at
+
+The lines left are split in two. A line is glanced at rather than read when:
+
+- it sits in a touched function that gained no decision (its cyclomatic complexity is not higher than before the change, or is 1 for a new function) and whose complexity after the change is at most 3;
+- it sits outside every function (a declaration, a field, a constant, data) and holds no branch, loop or boolean operator itself;
+- it is the check of a rename or the look at where a moved block went.
+
+Everything else is read closely: a function that gained a decision, a function that stays complex, a conditional at the top level. A hunk that spans several functions is split line by line, the innermost function taking a nested line. The reading time is twenty lines read closely a minute and sixty glanced at.
+
+The rule was chosen on the bench, over the touched functions of the last 1,500 landings of twenty-eight repositories, with the lines a later fix repaired (SZZ) as the label. Among 130,998 touched functions, those that gained no decision and ended at complexity 3 or below were repaired 1.3 % of the time, the others 2.8 %; the repair rate climbs with every decision gained, up to 7.3 % for functions that gained three or more and ended above 10. The reach of a file (its afferent coupling) did not help: functions in files no other file imports were repaired more often (2.5 %) than functions in files imported by twenty or more (1.4 %). A third of the functions repaired later sit in what the rule glances at: a glance is a fast read, not a skip.
+
+## Facts
+
+A fact is something the diff does not show and a reader can check in a minute. None is a prediction: each is true by construction of what it is computed on. At most one fact of each kind per file.
+
+| Fact | Computation |
+|---|---|
+| introduces a cycle | the import graph of the repository after the change holds a path from a new dependency of the file back to the file; the shortest such path is shown, once however many of its files the change touches, and at most three cycles per change; in JavaScript and TypeScript a cycle through an `index` file, in Python a cycle through an `__init__.py`, is a barrel re-exporting its directory and is not reported; in Rust the edge from a file to a module it declares with `mod name;` is not a dependency, since every module reading `crate::` would otherwise close a cycle by construction; in C# a `using Namespace;` directive reaches only the files of the namespace whose class or interface the source names, not the whole namespace |
+| depends on a module for the first time | a new dependency of the file points to a directory no file of the file's directory depended on before the change; a directory that did not exist before says nothing; one fact per directory however many of its files gained the dependency, and a directory three directories or more start to depend on at once is told the other way round, once |
+| first use of a library | the file imports a module that resolves to no file of the repository, that no file imported before the change, that is not part of the language's standard library, and whose first segment is not a directory, or a source file, next to or above the file (a path alias or an unbound relative import), nor a `#` subpath import, nor a file imported for its content such as `package.json` or a stylesheet; modules are counted by package, `@scope/name` or `name` in JavaScript and TypeScript, the first segment in Python; a package the repository defines itself (a `package.json` name, a `Cargo.toml` package, a nested `go.mod` module) is not a library |
+| went from N to M parameters | an exported function exists in both versions with a different number of parameters, or different types when the parser gives them; renaming a parameter is not a change |
+| called from N files | the files that hold the function's name followed by a parenthesis and depend on the file in the graph, or sit in its directory; when the graph knows no dependent of the file, every file holding the name counts and the fact says "by name" |
+| new exported functions called nowhere yet | exported functions the change adds, outside the entry points a runtime calls (`main`, `init`, constructors, `String`...), whose name no other file calls; configuration files of the tooling (`vite.config.ts`, `.eslintrc.js`) export for the tool and say nothing |
+| similar to a function the change does not touch | the clone of a touched function, when the clone's file is not in the change |
+| fixed N times in the past year | `git log -L` on the lines of the function in the base version, over the twelve months before the change; commits recognized as fixes with the rules of the backtest, reverts counted apart; asked for at most twelve functions, the most complex first, of the files to read; stated from two fixes, one line per file naming the most fixed function, the next one, and counting the rest |
+| changed lines not run by any test | among the lines of the file's hunks that a coverage report instruments, those with no hit; the report is `coverage.out`, `lcov.info`, `coverage.xml`, `clover.xml` or a few other usual names at the root or under `coverage/`, else the `coverage` key of `.cribelo.yaml` or `--coverage`; lcov, Cobertura, Clover and Go profiles are read, Go import paths mapped through `go.mod`; the report is read as the last test run left it; the fact is stated from ten uncovered lines, or half of the instrumented ones |
+
+Exported means: an uppercase initial in Go, no leading underscore in Python, `public` or no visibility keyword in PHP, `export` in TypeScript, `pub` in Rust, `public` in Java and C#.
+
+The graph before the change is the graph of the repository after it, with the base version of every changed file standing in for its head version, the deleted files back and the new ones gone. Test files are left out of both graphs, and a directory that holds only tests at the base is a new directory.
+
+## Reading order
+
+The files of the reading list are grouped. Two files are in one group when one depends on the other in the import graph, or, in one directory, when one calls a function the other declares. Within a group, a file comes before the files that use it; a cycle is broken on the best score. Each test file of the change is placed right after the file it exercises: the file whose name the test is built on (`invoice_test.go`, `test_token.py`, `SessionTest.php`, `button.test.tsx`), or a file of its directory when no changed file carries its name. A test that sits next to changed code belongs to that directory and is matched there only: the `resolver_test.go` of one engine does not exercise the `resolver.go` of another. Under a budget, a test is read only while it fits. Groups come in this order: those carrying a cycle, a signature change, a function with a fix record, a first dependency or a clone first; then by their best score; then by size.
 
 ## Ten signals
 
@@ -71,9 +125,13 @@ Default weights:
 
 A score of 0.70 or more is high, 0.40 or more is medium, below is low. The thresholds are stored with the weights. The files are sorted by score; ties are broken deterministically, so the same change always gives the same order.
 
-The reading list is every file at the high level, and at least `top` files (three by default, also a key of `.cribelo.yaml`). `--top N` on the command line reads exactly N files. `--budget` reads as many files as fit in the given time at twenty changed lines a minute, and overrides both. The list is never empty when a code file was ranked. The reasons printed next to a file are its three largest positive contributions.
+The reading list is every file at the high level, and at least `top` files (three by default, also a key of `.cribelo.yaml`), files whose every hunk is mechanical left out. `--top N` on the command line reads exactly N files. `--budget` reads as many files as fit in the given time, at twenty lines read closely a minute and sixty glanced at, and overrides both. The list is never empty when a code file with a behavior hunk was ranked. The reasons printed next to a file are its three largest positive contributions.
 
 `cribelo explain <file>` prints every value and contribution of one file.
+
+## The gate
+
+Without a gate, the command exits 0 whatever the change. `--fail-over 1h` (or `fail_over` in `.cribelo.yaml`) makes it exit 1 when the reading time of the whole change is above an hour: the time of every file with something to read or glance at, tests included, whatever the budget asked for. `--fail-on cycle, signature` (or `fail_on`) makes it exit 1 when the change states a fact of one of these kinds; every kind of fact can be named. The plan then ends with `Gate: failed` and one line per breach, or `Gate: passed` with what was checked. The levels of the score are not a gate: a level is an estimate, a gate needs a measure.
 
 ## The backtest
 

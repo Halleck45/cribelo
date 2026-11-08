@@ -1,5 +1,5 @@
 name: Cribelo
-description: Which files of this pull request deserve a human reader. Posts the plan as one comment, updated on every push.
+description: The reading map of a pull request, what to read, in which order, what the diff does not show. Posts the plan as one comment, updated on every push.
 author: Jean-François Lépine
 branding:
   icon: filter
@@ -19,8 +19,11 @@ inputs:
     description: Reading time available, for example 15m. Overrides top when set.
     default: ""
   fail-on:
-    description: Fail the job when a file reaches this level, high or medium. Default never.
-    default: never
+    description: "Fail the job when the change states one of these facts, comma separated: cycle, signature, history, dependency, library, clone, api, coverage. Default none."
+    default: ""
+  fail-over:
+    description: Fail the job when reading the whole change would take longer than this, for example 1h or 45m. Default none.
+    default: ""
   comment:
     description: Post the plan as a pull request comment.
     default: "true"
@@ -35,6 +38,12 @@ outputs:
   highest:
     description: Highest level in the change, high, medium, low or none.
     value: ${{ steps.plan.outputs.highest }}
+  minutes:
+    description: Reading time of the whole change, in minutes.
+    value: ${{ steps.plan.outputs.minutes }}
+  gate:
+    description: passed, failed, or none when no gate is set.
+    value: ${{ steps.plan.outputs.gate }}
 
 runs:
   using: composite
@@ -74,20 +83,28 @@ runs:
         TOP: ${{ inputs.top }}
         BUDGET: ${{ inputs.budget }}
         FAIL_ON: ${{ inputs.fail-on }}
+        FAIL_OVER: ${{ inputs.fail-over }}
       run: |
         set -uo pipefail
-        args=(--format markdown --fail-on "$FAIL_ON" --no-color)
+        args=(--format markdown --no-color)
         [ -n "$BASE" ] && args+=(--base "origin/${BASE#origin/}")
+        [ -n "$FAIL_ON" ] && args+=(--fail-on "$FAIL_ON")
+        [ -n "$FAIL_OVER" ] && args+=(--fail-over "$FAIL_OVER")
         if [ -n "$BUDGET" ]; then args+=(--budget "$BUDGET"); elif [ -n "$TOP" ]; then args+=(--top "$TOP"); fi
         out="$RUNNER_TEMP/cribelo/plan.md"
         cribelo "${args[@]}" > "$out"; status=$?
         echo "path=$out" >> "$GITHUB_OUTPUT"
-        highest=$(cribelo "${args[@]}" --format json 2>/dev/null | python3 -c '
+        cribelo "${args[@]}" --format json > "$RUNNER_TEMP/cribelo/plan.json" 2>/dev/null
+        python3 - "$RUNNER_TEMP/cribelo/plan.json" >> "$GITHUB_OUTPUT" 2>/dev/null <<'PY' || printf 'highest=none\nminutes=0\ngate=none\nreasons=\n' >> "$GITHUB_OUTPUT"
         import json, sys
+        plan = json.load(open(sys.argv[1]))
         rank = {"high": 3, "medium": 2, "low": 1}
-        levels = [f["level"] for f in json.load(sys.stdin).get("files") or []]
-        print(max(levels, key=lambda l: rank.get(l, 0)) if levels else "none")' || echo none)
-        echo "highest=$highest" >> "$GITHUB_OUTPUT"
+        levels = [f["level"] for f in plan.get("files") or []]
+        print("highest=" + (max(levels, key=lambda l: rank.get(l, 0)) if levels else "none"))
+        print("minutes=%d" % plan.get("change_minutes", 0))
+        print("gate=" + (plan.get("gate") or "none"))
+        print("reasons=" + "; ".join(plan.get("gate_reasons") or []))
+        PY
         cat "$out" >> "$GITHUB_STEP_SUMMARY"
         echo "status=$status" >> "$GITHUB_OUTPUT"
         [ "$status" -le 1 ] || exit "$status"
@@ -144,7 +161,7 @@ runs:
       if: steps.plan.outputs.status == '1'
       shell: bash
       env:
-        FAIL_ON: ${{ inputs.fail-on }}
+        REASONS: ${{ steps.plan.outputs.reasons }}
       run: |
-        echo "::error::cribelo: a file reached the $FAIL_ON level, see the plan"
+        echo "::error::cribelo: gate failed: ${REASONS:-see the plan}"
         exit 1
