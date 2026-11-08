@@ -1,6 +1,6 @@
 # How it is computed
 
-Cribelo draws the reading map of a change in three passes: each hunk gets a nature and the lines left to read are counted; facts about the structure are checked against the graphs and the history of the repository; the files are grouped by dependency and ordered. A score, the probability that a human should read a file, settles the order where the dependencies leave a choice. This page gives every step, so that you can contest it. Methodology version 1.1; the version is bumped whenever a signal, a transform or a default weight changes, and a weights file from another version is ignored.
+Cribelo draws the reading map of a change in three passes: each hunk gets a nature and the lines left are counted, those to read closely apart from those to glance at; facts about the structure are checked against the graphs and the history of the repository; the files are grouped by dependency and ordered. A score, the probability that a human should read a file, settles the order where the dependencies leave a choice. This page gives every step, so that you can contest it. Methodology version 1.1; the version is bumped whenever a signal, a transform or a default weight changes, and a weights file from another version is ignored.
 
 ## The change
 
@@ -40,7 +40,19 @@ Every hunk of the diff, a block of added and removed lines, gets one nature. The
 
 A moved function is one that left a file and arrived in another, or in the same file: the body (the declaration left out) has the same tokens, or the same tokens once identifiers are normalized, or at least 80 % of the same fingerprints, the fingerprints of the clone check with a window of twenty tokens. Bodies under twelve tokens are never matched: accessors look alike by construction. An extraction is a new function whose fingerprints are at least 80 % contained in a function that shrank by a fifth or more, and under 50 % contained in what remains of it. This follows RefDiff (Silva and Valente, 2017), which matches refactorings on token similarity without types.
 
-The lines to read of a file are the lines of its behavior hunks, plus one line per rename hunk and two per move or extraction, enough to glance at them, plus the new lines of a move. A file whose every hunk is mechanical and brought no new line is listed under Skip with its reason (moved code only, renames only, formatting only...) and never enters the reading list, whatever its score. The reading time is twenty lines to read a minute.
+The lines left of a file are the code lines of its behavior hunks (a line is left out when it is blank, starts with a comment marker, or is an import statement of the language), plus one line per rename hunk and two per move or extraction, plus the new lines of a move. A file whose every hunk is mechanical and brought no new line is listed under Skip with its reason (moved code only, renames only, formatting only...) and never enters the reading list, whatever its score.
+
+### Read closely or glance at
+
+The lines left are split in two. A line is glanced at rather than read when:
+
+- it sits in a touched function that gained no decision (its cyclomatic complexity is not higher than before the change, or is 1 for a new function) and whose complexity after the change is at most 3;
+- it sits outside every function (a declaration, a field, a constant, data) and holds no branch, loop or boolean operator itself;
+- it is the check of a rename or the look at where a moved block went.
+
+Everything else is read closely: a function that gained a decision, a function that stays complex, a conditional at the top level. A hunk that spans several functions is split line by line, the innermost function taking a nested line. The reading time is twenty lines read closely a minute and sixty glanced at.
+
+The rule was chosen on the bench, over the touched functions of the replayed changes, with the lines later repaired by a fix (SZZ) as the label: functions that gained no decision and stay at complexity 3 or below were repaired about half as often as the others, whatever the number of files depending on theirs. The reach of a file (its afferent coupling) did not help: functions in files nobody depends on were repaired more often, not less. See the numbers in the bench report.
 
 ## Facts
 
@@ -113,7 +125,7 @@ Default weights:
 
 A score of 0.70 or more is high, 0.40 or more is medium, below is low. The thresholds are stored with the weights. The files are sorted by score; ties are broken deterministically, so the same change always gives the same order.
 
-The reading list is every file at the high level, and at least `top` files (three by default, also a key of `.cribelo.yaml`), files whose every hunk is mechanical left out. `--top N` on the command line reads exactly N files. `--budget` reads as many files as fit in the given time at twenty lines to read a minute, and overrides both. The list is never empty when a code file with a behavior hunk was ranked. The reasons printed next to a file are its three largest positive contributions.
+The reading list is every file at the high level, and at least `top` files (three by default, also a key of `.cribelo.yaml`), files whose every hunk is mechanical left out. `--top N` on the command line reads exactly N files. `--budget` reads as many files as fit in the given time, at twenty lines read closely a minute and sixty glanced at, and overrides both. The list is never empty when a code file with a behavior hunk was ranked. The reasons printed next to a file are its three largest positive contributions.
 
 `cribelo explain <file>` prints every value and contribution of one file.
 

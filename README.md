@@ -14,38 +14,42 @@
 Cribelo draws the reading map of a pull request: how many lines are left to read once moves, renames, formatting and imports are set aside, what the diff does not show about the structure of the code, and in which order to read the files. It says why at every step. The name is the Latin *cribellum*, a small sieve.
 
 ```
-$ cribelo --base main
-cribelo · 26 files changed vs main (merge-base b7e2b04)
+$ cribelo --base origin/main
+cribelo · 34 files changed vs origin/main (merge-base b2f83dc)
 
-Read 17 of 26 changed files, about 2 h 30.
-2409 of 2456 changed lines to read: 8 comment hunks, 7 import hunks.
-Start with internal/cribelo/history.go: +131 lines, new historyFacts() complexity 20, +1 more.
+Read 14 of 34 changed files, about 48 min.
+1035 of 1771 changed lines to read closely, 369 to glance at: 11 import hunks.
+Start with internal/analyzer/library_reach.go: +266 lines, new LibraryUses() complexity 17, +4 more, imported by 83 files.
 
-                                                   complexity  to read           used by    commits 90d       tests
-      ↳ history.go, then what uses it
-   1  internal/cribelo/history.go            new   ▮▮▮▯▯ 20    ▮▮▯▯▯ 131         ▮▯▯▯▯ 1    ▮▯▯▯▯ 1, 1 fix    ✓
-   2  internal/cribelo/clones.go                   ▮▮▮▮▯ 39    ▮▯▯▯▯ 36          ▮▯▯▯▯ 1    ▮▯▯▯▯ 2           ✓
-   3  internal/cribelo/order.go              new   ▮▮▮▮▮ 48    ▮▮▮▮▯ 350         ▮▯▯▯▯ 1    ▮▯▯▯▯ 2, 1 fix    ✓
-   4  internal/cribelo/order_test.go         test  ▮▯▯▯▯ 2     ▮▮▮▯▯ 158         ▯▯▯▯▯      ▮▯▯▯▯ 2
-   5  internal/cribelo/facts.go              new   ▮▮▮▯▯ 19    ▮▮▮▮▯ 475         ▮▯▯▯▯ 1    ▮▮▯▯▯ 4, 1 fix    ✓
-   6  internal/cribelo/facts_test.go         test  ▮▯▯▯▯ 3     ▮▮▮▯▯ 159         ▯▯▯▯▯      ▮▮▯▯▯ 3, 1 fix
-   ...
-  10  internal/cribelo/plan.go                     ▮▮▮▮▮ 49    ▮▮▯▯▯ 100 of 118  ▮▯▯▯▯ 1    ▮▮▮▯▯ 7, 2 fixes  ✓
-   ...
-  16  internal/cribelo/describe.go           new   ▮▮▮▮▯ 23    ▮▮▯▯▯ 91          ▮▯▯▯▯ 1    ▮▯▯▯▯ 1           ✓
+                                                           complexity  to read           glance    used by    commits 90d        clone  tests
+      ↳ library_reach.go, then what uses it
+   1  internal/analyzer/library_reach.go             new   ▮▮▮▯▯ 17    ▮▮▮▯▯ 155 of 266  ▮▮▯▯▯ 54  ▮▮▮▮▮ 83   ▮▮▯▯▯ 3                   ✓
+   2  internal/analyzer/library_conformance_test.go  test  ▮▮▮▯▯ 12    ▮▯▯▯▯ 38 of 144   ▮▮▯▯▯ 77  ▯▯▯▯▯      ▮▯▯▯▯ 1                   
+   3  internal/analyzer/library_reach_test.go        test  ▮▯▯▯▯ 4     ▮▮▯▯▯ 99 of 146   ▮▯▯▯▯ 30  ▯▯▯▯▯      ▮▯▯▯▯ 2                   
+   4  internal/engine/util.go                              ▮▮▯▯▯ 10    ▮▯▯▯▯ 27 of 32    ▮▯▯▯▯ 2   ▮▮▮▮▮ 111  ▮▮▮▯▯ 6, 3 fixes          ✗
+   5  internal/analyzer/file_dependency_analyzer.go        ▮▮▮▮▮ 44    ▮▮▯▯▯ 53 of 67    ▮▯▯▯▯ 3   ▮▮▮▮▮ 83   ▮▮▯▯▯ 4, 1 fix            ✓
+   6  internal/engine/php/deps/resolver.go           new   ▮▮▯▯▯ 9     ▮▯▯▯▯ 23 of 77    ▮▯▯▯▯ 27  ▮▯▯▯▯ 1    ▮▯▯▯▯ 1            84%    ✓
+  ...
+  14  internal/analyzer/community_graph.go                 ▮▮▮▮▮ 51    ▮▯▯▯▯ 12 of 18    ▮▯▯▯▯ 2   ▮▮▮▮▮ 83   ▮▯▯▯▯ 2                   ✓
 
-  17  internal/engine/util.go                      ▮▮▮▮▯ 35    ▮▯▯▯▯ 42 of 53    ▮▮▮▮▮ 113  ▮▮▮▯▯ 7, 3 fixes  ✗
+Worth knowing  true by construction, not predicted
+  cmd/ast-metrics/main.go  main() was fixed 5 times in the past year
+  internal/analyzer/aggregator.go  internal/analyzer depends on internal/engine/php/deps for the first time
+  internal/engine/typescript/deps/resolver.go  internal/engine/typescript/deps depends on internal/engine/typescript/module for the first time
+  cmd/ast-metrics/main.go  38 of 38 changed lines not run by any test, by pr196-coverage.out
+  internal/analyzer/library_reach.go  15 of 161 changed lines not run by any test, by pr196-coverage.out
+  internal/command/who_uses_command.go  49 of 162 changed lines not run by any test, by pr196-coverage.out
+  +1 more, see cribelo explain <file>
 
-Skip (9)
-  ranked lower 6 · tests only 2 · no measurable change 1    cribelo skip
+Skip (20)
+  ranked lower 9 · tests only 7 · no measurable change 4    cribelo skip
 
-Gate: passed (11 high, 4 medium, fail on never)
-Weights: generic, not yet calibrated on this repository (run: cribelo calibrate)
+Gate: passed (9 high, 7 medium, fail on never)
 ```
 
 Three things happen here.
 
-Every hunk of the diff gets a nature. A function that left one file and arrived in another is a move; a block cut out of a function that shrank is an extraction; a consistent `oldName → newName` across the change is a rename; the rest is formatting, comments, imports, or a change of behavior. The "to read" column counts the lines of behavior, and a file whose every hunk is mechanical is set aside with its reason, to check in a glance rather than read.
+Every hunk of the diff gets a nature. A function that left one file and arrived in another is a move; a block cut out of a function that shrank is an extraction; a consistent `oldName → newName` across the change is a rename; the rest is formatting, comments, imports, or a change of behavior. The code lines of behavior are then split: a line in a function that gained no decision and stays simple, or outside every function, is glanced at; the rest is read closely. The "to read" and "glance" columns count them, and a file whose every hunk is mechanical is set aside with its reason.
 
 The files to read are grouped by dependency, the file the others use first, each test right after the file it exercises. A reader who knows what a function does before meeting its callers finds more, and gets tired later.
 
