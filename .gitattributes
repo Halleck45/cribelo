@@ -1,0 +1,2 @@
+# Install and release helpers; the analysis is Go (github.com/ast-metrics/ast-metrics).
+*.sh linguist-detectable=false
