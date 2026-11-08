@@ -129,6 +129,10 @@ The reading list is every file at the high level, and at least `top` files (thre
 
 `cribelo explain <file>` prints every value and contribution of one file.
 
+## The gate
+
+Without a gate, the command exits 0 whatever the change. `--fail-over 1h` (or `fail_over` in `.cribelo.yaml`) makes it exit 1 when the reading time of the whole change is above an hour: the time of every file with something to read or glance at, tests included, whatever the budget asked for. `--fail-on cycle, signature` (or `fail_on`) makes it exit 1 when the change states a fact of one of these kinds; every kind of fact can be named. The plan then ends with `Gate: failed` and one line per breach, or `Gate: passed` with what was checked. The levels of the score are not a gate: a level is an estimate, a gate needs a measure.
+
 ## The backtest
 
 `cribelo backtest` walks the first-parent history of the base branch, newest first, up to `--max` landings among those at least ninety days old (a busy branch may have hundreds of younger ones). For each landing (a merge, or a commit landed directly) it rebuilds the change against its parent, parses both snapshots from git objects, computes the ten signals and the plan. A landing qualifies when it changes at least four code files and is old enough for the ninety days that follow to be known.

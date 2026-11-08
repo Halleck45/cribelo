@@ -43,8 +43,6 @@ Worth knowing  true by construction, not predicted
 
 Skip (20)
   ranked lower 9 · tests only 7 · no measurable change 4    cribelo skip
-
-Gate: passed (9 high, 7 medium, fail on never)
 ```
 
 Three things happen here.
@@ -105,7 +103,16 @@ jobs:
       - uses: cribelo/cribelo@v1
 ```
 
-The plan is posted as a single comment and updated on each push. `fail-on: high` makes the job fail when a file reaches the high level.
+The plan is posted as a single comment and updated on each push. The job never fails on the content of the change unless you ask for a gate:
+
+```yaml
+      - uses: cribelo/cribelo@v1
+        with:
+          fail-over: 1h
+          fail-on: cycle, signature
+```
+
+`fail-over: 1h` fails the job when reading the whole change, every file with something to read, would take more than an hour: the change is too large for one reviewer, split it. `fail-on` fails it when the change states a fact of the kinds you name, here an import cycle introduced or an exported signature changed that other files call; any kind listed under the facts below works. The gate is set on what the plan measures, never on the score. The job log and the comment say why it failed, one line per breach, such as "reading time 1 h 17, over the 1 h allowed".
 
 ### Pull requests from forks
 
@@ -197,7 +204,8 @@ These figures are from the AST Metrics repository. A fix commit touching a file 
 ```yaml
 base: origin/develop
 top: 3                      # the least number of files to read
-fail_on: never              # high, medium or never
+fail_on: [cycle, signature]  # facts that fail the gate; none by default
+fail_over: 1h               # reading time of the whole change that fails the gate
 coverage: coverage/lcov.info  # report to read the untested changed lines from; none to skip
 ignore:
   - "migrations/**"
