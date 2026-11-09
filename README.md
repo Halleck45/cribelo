@@ -7,7 +7,7 @@
 
 <h3 align="center">What to read, what to skip.</h3>
 
-<p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 34 files changed, 13 to read in about 45 minutes, 1035 of 1771 lines to read closely and 369 to glance at, each file with bars for complexity, lines to read, lines to glance at, coupling and recent commits, then the facts and 20 skipped files" width="900"></p>
+<p align="center"><img src="docs/plan.svg" alt="cribelo in a terminal: 34 files changed, 13 to read in about 45 minutes, each file with the line ranges to read closely and the ones to glance at, then bars for complexity, coupling and recent commits, the totals, the facts and 21 skipped files" width="900"></p>
 
 # Cribelo
 
@@ -18,36 +18,47 @@ $ cribelo --base origin/main
 cribelo · 34 files changed vs origin/main (merge-base b2f83dc)
 
 Read 13 of 34 changed files, about 45 min.
-1035 of 1771 changed lines to read closely, 369 to glance at: 11 import hunks.
-Start with internal/analyzer/library_reach.go: +266 lines, new LibraryUses() complexity 17, +4 more, imported by 83 files.
 
-                                                           complexity  to read           glance    used by    commits 90d        clone  tests
-      ↳ library_reach.go, then what uses it
-   1  internal/analyzer/library_reach.go             new   ▮▮▮▯▯ 17    ▮▮▮▯▯ 155 of 266  ▮▮▯▯▯ 54  ▮▮▮▮▮ 83   ▮▮▯▯▯ 3                   ✓
-   2  internal/analyzer/library_conformance_test.go  test  ▮▮▮▯▯ 12    ▮▯▯▯▯ 38 of 144   ▮▮▯▯▯ 77  ▯▯▯▯▯      ▮▯▯▯▯ 1                   
-   3  internal/analyzer/library_reach_test.go        test  ▮▯▯▯▯ 4     ▮▮▯▯▯ 99 of 146   ▮▯▯▯▯ 30  ▯▯▯▯▯      ▮▯▯▯▯ 2                   
-   4  internal/engine/util.go                              ▮▮▯▯▯ 10    ▮▯▯▯▯ 27 of 32    ▮▯▯▯▯ 2   ▮▮▮▮▮ 111  ▮▮▮▯▯ 6, 3 fixes          ✗
-   5  internal/analyzer/file_dependency_analyzer.go        ▮▮▮▮▮ 44    ▮▮▯▯▯ 53 of 67    ▮▯▯▯▯ 3   ▮▮▮▮▮ 83   ▮▮▯▯▯ 4, 1 fix            ✓
-   6  internal/engine/php/deps/resolver.go           new   ▮▮▯▯▯ 9     ▮▯▯▯▯ 23 of 77    ▮▯▯▯▯ 27  ▮▯▯▯▯ 1    ▮▯▯▯▯ 1            84%    ✓
+                                                           lines to read closely               lines to glance at
+   1  internal/analyzer/library_reach.go             new   30-35, 66-265                       16-26, 39-57
+   2  internal/analyzer/library_conformance_test.go  test  98-140                              25-93
+   3  internal/analyzer/library_reach_test.go        test  10-63, 85-144                       67-80
+   4  internal/engine/util.go                              85-112
+   5  internal/analyzer/file_dependency_analyzer.go        97-101, 122-127, 141, 152, +4 more  22-27
+   6  internal/engine/php/deps/resolver.go           new   25-43, 57-69                        15-22, 46-51, 75-76
   …
-  13  internal/analyzer/community_graph.go                 ▮▮▮▮▮ 51    ▮▯▯▯▯ 12 of 18    ▮▯▯▯▯ 2   ▮▮▮▮▮ 83   ▮▯▯▯▯ 2                   ✓
+  13  internal/analyzer/community_graph.go                 112, 217, 233, 250, +1 more         line 86
+
+Why these files
+                                   complexity  used by    commits 90d        clone  test changed
+   1  library_reach.go             ▮▮▮▯▯ 17    ▮▮▮▮▮ 83   ▮▮▯▯▯ 3                   ✓
+   4  util.go                      ▮▮▯▯▯ 10    ▮▮▮▮▮ 111  ▮▮▮▯▯ 6, 3 fixes          ✗
+   5  file_dependency_analyzer.go  ▮▮▮▮▮ 44    ▮▮▮▮▮ 83   ▮▮▯▯▯ 4, 1 fix            ✓
+   6  php/deps/resolver.go         ▮▮▯▯▯ 9     ▮▯▯▯▯ 1    ▮▯▯▯▯ 1            84%    ✓
+   8  java/deps/resolver.go        ▮▮▮▯▯ 11    ▮▯▯▯▯ 1    ▮▮▯▯▯ 3, 1 fix     100%   ✓
+  10  who_uses_command.go          ▮▮▮▯▯ 18    ▮▮▯▯▯ 3    ▮▮▯▯▯ 3, 1 fix            ✓
+  12  community_aggregator.go      ▮▯▯▯▯ 5     ▮▮▮▮▮ 83   ▮▮▮▮▯ 11, 2 fixes         ✓
+  13  community_graph.go           ▮▮▮▮▮ 51    ▮▮▮▮▮ 83   ▮▯▯▯▯ 2                   ✓
+
+Totals  688 lines to read closely, 280 to glance at (20 and 60 lines a minute)
+Set aside in the whole change: 11 import hunks.
 
 Worth knowing  true by construction, not predicted
   internal/analyzer/aggregator.go  internal/analyzer depends on internal/engine/php/deps for the first time
   internal/engine/typescript/deps/resolver.go  internal/engine/typescript/deps depends on internal/engine/typescript/module for the first time
-  internal/analyzer/library_reach.go  15 of 161 changed lines not run by any test, by pr196-coverage.out
-  internal/command/who_uses_command.go  49 of 162 changed lines not run by any test, by pr196-coverage.out
-  internal/engine/util.go  25 of 25 changed lines not run by any test, by pr196-coverage.out
+  internal/analyzer/library_reach.go  15 of 161 changed lines not run by any test, according to pr196-coverage.out
+  internal/command/who_uses_command.go  49 of 162 changed lines not run by any test, according to pr196-coverage.out
+  internal/engine/util.go  25 of 25 changed lines not run by any test, according to pr196-coverage.out
 
 Skip (21)
-  ranked lower 10 · tests only 7 · no measurable change 4    cribelo skip
+  10 ranked lower · 7 tests only · 4 no measurable change    cribelo skip
 
 Weights: generic, not yet calibrated on this repository (run: cribelo calibrate)
 ```
 
 Three things happen here.
 
-Every hunk of the diff gets a nature. A function that left one file and arrived in another is a move; a block cut out of a function that shrank is an extraction; a consistent `oldName → newName` across the change is a rename; the rest is formatting, comments, imports, or a change of behavior. The code lines of behavior are then split: a line in a function that gained no decision and stays simple, or outside every function, is glanced at; the rest is read closely. The "to read" and "glance" columns count them, and a file whose every hunk is mechanical is set aside with its reason.
+Every hunk of the diff gets a nature. A function that left one file and arrived in another is a move; a block cut out of a function that shrank is an extraction; a consistent `oldName → newName` across the change is a rename; the rest is formatting, comments, imports, or a change of behavior. The code lines of behavior are then split: a line in a function that gained no decision and stays simple, or outside every function, is glanced at; the rest is read closely. The plan gives the lines of each kind file by file, as ranges, and a file whose every hunk is mechanical is set aside with its reason.
 
 The files to read are grouped by dependency, the file the others use first, each test right after the file it exercises. A reader who knows what a function does before meeting its callers finds more, and gets tired later.
 
@@ -60,7 +71,7 @@ Worth knowing  true by construction, not predicted
 
 A dependency cycle the change introduces, a module depending on another for the first time, a library nobody used before, an exported function whose parameters changed and the files calling it, a new export nothing calls yet, a touched function that is a clone of one the change leaves alone, a function fixed several times this year, changed lines that no test runs when a coverage report is around. None of these is a prediction. Each is true by construction of the graphs and the history it comes from, and Cribelo shows at most a handful.
 
-Within a group, the order falls back on a score: the cyclomatic complexity added by the touched functions, the most complex of them, how many files import the file, whether a touched function is a clone, whether a test changed with it, how often the file was committed in the last ninety days and how many of those commits were fixes. The reading list holds every file at the high level, and at least three. `--budget 15m` caps it to what fits in the time you have, `--top 5` forces a count.
+Within a group, the order falls back on a score: the cyclomatic complexity added by the touched functions, the most complex of them, how many files import the file, whether a touched function is a clone, whether a test changed with it, how often the file was committed in the last ninety days and how many of those commits were fixes. "Why these files" shows them file by file, a bar and its value. The reading list holds every file at the high level, and at least three. `--budget 15m` caps it to what fits in the time you have, `--top 5` forces a count.
 
 Everything runs locally from the git checkout. There is no service, no account and no language model, and the same change gives the same plan on every machine.
 
@@ -103,7 +114,7 @@ jobs:
       - uses: cribelo/cribelo@v2
 ```
 
-The plan is posted as a single comment and updated on each push. The job never fails on the content of the change unless you ask for a gate:
+The plan is posted as a single comment and updated on each push. Each line range in it links to the diff of the pull request. The job never fails on the content of the change unless you ask for a gate:
 
 ```yaml
       - uses: cribelo/cribelo@v2
