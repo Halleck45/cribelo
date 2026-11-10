@@ -13,4 +13,5 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: ./
         with:
+          version: source
           inline: true
