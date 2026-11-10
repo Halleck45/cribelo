@@ -45,7 +45,7 @@ func Run(args []string, version string) int {
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "dir", Aliases: []string{"C"}, Value: ".", Usage: "repository or directory inside it"},
 			&cli.StringFlag{Name: "base", Usage: "reference to compare against (default: the default branch)"},
-			&cli.StringFlag{Name: "format", Value: "text", Usage: "text, markdown or json"},
+			&cli.StringFlag{Name: "format", Value: "text", Usage: "text, markdown, json, or github-review: the lines to read closely as review comments, the body of a call to the GitHub reviews API"},
 			&cli.IntFlag{Name: "top", Value: 0, Usage: "read exactly this many files (default: every high file, at least 3)"},
 			&cli.DurationFlag{Name: "budget", Usage: "reading time available, e.g. 10m; overrides --top"},
 			&cli.StringFlag{Name: "fail-on", Usage: "fail when the change states one of these facts, comma separated: cycle, signature, history, dependency, library, clone, api, coverage"},
@@ -306,8 +306,14 @@ func printPlan(plan render.Report, format string) error {
 			return err
 		}
 		fmt.Print(out)
+	case "github-review":
+		out, err := plan.Review().JSON()
+		if err != nil {
+			return err
+		}
+		fmt.Print(out)
 	default:
-		return fmt.Errorf("unknown format %q (text, markdown or json)", format)
+		return fmt.Errorf("unknown format %q (text, markdown, json or github-review)", format)
 	}
 	return nil
 }
