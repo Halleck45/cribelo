@@ -125,6 +125,16 @@ The plan is posted as a single comment and updated on each push. Each line range
 
 `fail-over: 1h` fails the job when reading the whole change, every file with something to read, would take more than an hour: the change is too large for one reviewer, split it. `fail-on` fails it when the change states a fact of the kinds you name, here an import cycle introduced or an exported signature changed that other files call; any kind listed under the facts below works. The gate is set on what the plan measures, never on the score. The job log and the comment say why it failed, one line per breach, such as "reading time 1 h 17, over the 1 h allowed".
 
+The lines to read closely can also be marked on the diff itself:
+
+```yaml
+      - uses: cribelo/cribelo@v2
+        with:
+          inline: true
+```
+
+Each span then carries a review comment at its place in the Files tab, naming the functions it falls in and how their complexity moved, with the facts about the file on the first one. The comments of the previous run are removed when a new push is reviewed, so the diff only shows the current ones. Outside GitHub Actions, `cribelo --format github-review` prints the body of the review for the [reviews endpoint](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request), and `scripts/post-review.sh` posts it with `gh`.
+
 ### Pull requests from forks
 
 GitHub runs a pull request from a fork, or from Dependabot, with a read-only token, so the job cannot comment. The plan still lands in the job summary, and in an artifact that a second workflow posts with the rights of your repository. Save it as `.github/workflows/cribelo-comment.yml`:
