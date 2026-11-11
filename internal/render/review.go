@@ -33,7 +33,7 @@ type Review struct {
 	// when the run checked out a merge commit.
 	CommitID string          `json:"commit_id,omitempty"`
 	Event    string          `json:"event"`
-	Body     string          `json:"body"`
+	Body     string          `json:"body,omitempty"`
 	Comments []ReviewComment `json:"comments"`
 }
 
@@ -149,10 +149,8 @@ func lines(spans []engine.LineRange) string {
 // why. What the diff does not show about a file goes with its first comment.
 func (p Report) Review(max int) Review {
 	review := Review{CommitID: p.HeadSha, Event: "COMMENT", Comments: []ReviewComment{}}
-	places, total := p.places(max)
-	files := map[string]bool{}
+	places, _ := p.places(max)
 	for _, pl := range places {
-		files[pl.path] = true
 		body := "**Read closely.**"
 		if pl.paragraphs[0] != "" {
 			body += " " + pl.paragraphs[0]
@@ -166,16 +164,12 @@ func (p Report) Review(max int) Review {
 		}
 		review.Comments = append(review.Comments, c)
 	}
-	n := len(places)
-	switch {
-	case n == 0:
-		review.Body = "Cribelo found no lines to read closely in this change."
-	case n < total:
-		review.Body = fmt.Sprintf("Cribelo marks the first %d of the %d places to read closely in this change. The reading map in the comment of this pull request lists them all.", n, total)
-	default:
-		review.Body = fmt.Sprintf("Cribelo marks %d %s to read closely in %d %s. The reading map is in the comment of this pull request.", n, engine.Plural(n, "place"), len(files), engine.Plural(len(files), "file"))
+	// A review with comments carries no text of its own: GitHub keeps the
+	// text of every review in the conversation, one more at each push, when
+	// the comments of the run before can be removed.
+	if len(places) == 0 {
+		review.Body = "Cribelo found no lines to read closely in this change.\n\n" + Marker
 	}
-	review.Body += "\n\n" + Marker
 	return review
 }
 
@@ -223,8 +217,9 @@ func commandProperty(s string) string {
 
 // whatToCheck words what a reader looks for in one span, from the functions
 // it falls in that no earlier comment told: the branches a function gained,
-// the code that is new, the lines changed inside branches already there.
-// The text is empty when nothing is known about the span.
+// the code that is new, the lines changed inside branches already there. A
+// span that mixes them gets the first of these, and the names of the other
+// functions. The text is empty when nothing is known about the span.
 func whatToCheck(f *engine.FileReport, fns []*engine.TouchedFunction) string {
 	if len(fns) == 0 {
 		if f.Test {
@@ -290,7 +285,23 @@ func whatToCheck(f *engine.FileReport, fns []*engine.TouchedFunction) string {
 	if len(same) > 0 {
 		sentences = append(sentences, fmt.Sprintf("No new branch in %s, but the changed lines sit inside existing ones. Check that they hold in every case, not only the one the change was written for.", states(same)))
 	}
-	return strings.Join(sentences, " ")
+	// One thing to check a comment: the first kind found leads, the
+	// functions of the other kinds are only named.
+	var rest []*engine.TouchedFunction
+	lead := true
+	for _, group := range [][]*engine.TouchedFunction{grown, added, shrunk, same} {
+		if len(group) == 0 {
+			continue
+		}
+		if !lead {
+			rest = append(rest, group...)
+		}
+		lead = false
+	}
+	if len(rest) > 0 {
+		return sentences[0] + " These lines also touch " + states(rest) + "."
+	}
+	return sentences[0]
 }
 
 // whyThisFile words what the diff does not show about a file, for its first

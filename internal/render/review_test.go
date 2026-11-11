@@ -25,7 +25,7 @@ func TestReview(t *testing.T) {
 
 	assert.Equal(t, "fedcba9876", review.CommitID)
 	assert.Equal(t, "COMMENT", review.Event)
-	assert.Equal(t, "Cribelo marks 5 places to read closely in 3 files. The reading map is in the comment of this pull request.\n\n"+Marker, review.Body)
+	assert.Empty(t, review.Body, "the comments speak, a text would stay in the conversation at each push")
 	require.Len(t, review.Comments, 5, "three functions of store.go, then its test, then cmd/store.go; handler.go is only glanced at")
 
 	assert.Equal(t, ReviewComment{Path: "core/store.go", Line: 14, StartLine: 10, Side: "RIGHT", StartSide: "RIGHT",
@@ -49,6 +49,7 @@ func TestReview(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(out), &back))
 	assert.Equal(t, "RIGHT", back["comments"].([]any)[0].(map[string]any)["side"])
 	assert.NotContains(t, out, `"start_line": 0`, "a single line carries no start")
+	assert.NotContains(t, out, `"body": ""`, "no text is sent rather than an empty one")
 	assert.Contains(t, out, Marker, "the marker is not escaped")
 }
 
@@ -81,6 +82,8 @@ func TestReviewWordsWhatToCheck(t *testing.T) {
 		whatToCheck(test, []*engine.TouchedFunction{fn("TestPut", 0, 5, true)}))
 	assert.Equal(t, "These tests have logic of their own, `TestPut()` most of all (complexity 5). Check what they assert, not only that they pass.",
 		whatToCheck(test, []*engine.TouchedFunction{fn("TestGet", 0, 4, true), fn("TestPut", 0, 5, true)}))
+	assert.Equal(t, "This change adds 2 branches to `Put()` (complexity 3 → 5). For each new condition, check when it is taken and whether a test takes it. These lines also touch `Get()` (complexity 6) and `List()` (complexity 4).",
+		whatToCheck(code, []*engine.TouchedFunction{fn("List", 4, 4, false), fn("Put", 3, 5, false), fn("Get", 0, 6, true)}), "one thing to check, the rest is named")
 	assert.Empty(t, whatToCheck(code, nil))
 }
 
@@ -88,7 +91,6 @@ func TestReviewKeepsTheFirstPlaces(t *testing.T) {
 	p := readingPlan()
 	review := p.Review(2)
 	require.Len(t, review.Comments, 2)
-	assert.Equal(t, "Cribelo marks the first 2 of the 6 places to read closely in this change. The reading map in the comment of this pull request lists them all.\n\n"+Marker, review.Body)
 	assert.Len(t, p.Review(0).Comments, 6, "ten by default; four spans at most for store.go, whose functions are not known here")
 }
 
