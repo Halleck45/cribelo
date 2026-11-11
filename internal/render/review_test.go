@@ -104,3 +104,12 @@ func TestAnnotations(t *testing.T) {
 		"::notice file=cmd/store.go,line=5,endLine=7,title=Cribelo%3A read closely::Cribelo counts these lines among those to read closely.\n", out)
 	assert.Len(t, strings.Split(strings.TrimSpace(p.Annotations(1)), "\n"), 1)
 }
+
+func TestReviewWordsWhyThisFile(t *testing.T) {
+	f := &engine.FileReport{Values: map[engine.Feature]float64{engine.FeatureUntested: 1}}
+	assert.Equal(t, []string{"No test of this file is part of the change."}, whyThisFile(f, nil))
+	f.Values[engine.FeatureAfferent] = 12
+	f.Values[engine.FeatureFixes90d] = 2
+	assert.Equal(t, []string{"12 files depend on this file, it needed 2 fixes in the last 90 days and no test of it is part of the change."}, whyThisFile(f, nil))
+	assert.Empty(t, whyThisFile(&engine.FileReport{Test: true, Values: f.Values}, nil), "the signals are those of the code")
+}

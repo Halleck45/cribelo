@@ -311,7 +311,11 @@ func whyThisFile(f *engine.FileReport, facts []engine.Fact) []string {
 			parts = append(parts, fmt.Sprintf("%s needed %d %s in the last 90 days", subject, fixes, pick(fixes, "fix", "fixes")))
 		}
 		if f.Values[engine.FeatureUntested] > 0 {
-			parts = append(parts, "no test of it is part of the change")
+			subject := "it"
+			if len(parts) == 0 {
+				subject = "this file"
+			}
+			parts = append(parts, "no test of "+subject+" is part of the change")
 		}
 		if len(parts) > 0 {
 			sentence := joinAnd(parts) + "."
