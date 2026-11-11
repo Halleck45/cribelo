@@ -2,6 +2,7 @@ package render
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	engine "github.com/ast-metrics/ast-metrics/cribelo"
@@ -19,22 +20,28 @@ func TestReview(t *testing.T) {
 		{Name: "Get", Line: 28, End: 35, New: true, After: 3},
 		{Name: "List", Line: 38, Before: 4, After: 4},
 	}
-	review := p.Review()
+	p.File("core/store.go").Values[engine.FeatureFixes90d] = 1
+	review := p.Review(0)
 
 	assert.Equal(t, "fedcba9876", review.CommitID)
 	assert.Equal(t, "COMMENT", review.Event)
-	assert.Equal(t, "Cribelo marks 6 places to read closely in 3 files. The reading map is in the comment of this pull request.\n\n"+Marker, review.Body)
-	require.Len(t, review.Comments, 6, "four spans at most for store.go, then its test, then cmd/store.go; handler.go is only glanced at")
+	assert.Equal(t, "Cribelo marks 5 places to read closely in 3 files. The reading map is in the comment of this pull request.\n\n"+Marker, review.Body)
+	require.Len(t, review.Comments, 5, "three functions of store.go, then its test, then cmd/store.go; handler.go is only glanced at")
 
-	first := review.Comments[0]
 	assert.Equal(t, ReviewComment{Path: "core/store.go", Line: 14, StartLine: 10, Side: "RIGHT", StartSide: "RIGHT",
-		Body: "**Read closely** · `Put()` complexity 2 → 6\n\n**Worth knowing**\n- introduces a cycle: store.go → api.go → store.go\n\n" + Marker}, first)
-	assert.Equal(t, ReviewComment{Path: "core/store.go", Line: 30, Side: "RIGHT", Body: "**Read closely** · `Get()` new, complexity 3\n\n" + Marker}, review.Comments[1], "a lone line has no start, the facts are told once")
-	assert.Equal(t, "**Read closely** · `List()` complexity 4\n\n"+Marker, review.Comments[2].Body, "a function without a known end holds the spans after its start")
-	assert.Equal(t, 71, review.Comments[3].Line)
-	assert.Equal(t, "core/store_test.go", review.Comments[4].Path)
-	assert.Equal(t, "**Read closely**\n\n"+Marker, review.Comments[4].Body, "no function known, no words about it")
-	assert.Equal(t, ReviewComment{Path: "cmd/store.go", Line: 7, StartLine: 5, Side: "RIGHT", StartSide: "RIGHT", Body: "**Read closely**\n\n" + Marker}, review.Comments[5])
+		Body: "**Read closely.** This change adds 4 branches to `Put()` (complexity 2 → 6). For each new condition, check when it is taken and whether a test takes it.\n\n" +
+			"2 files depend on this file and it needed 1 fix in the last 90 days.\n\n" +
+			"- introduces a cycle: store.go → api.go → store.go\n\n" + Marker}, review.Comments[0])
+	assert.Equal(t, ReviewComment{Path: "core/store.go", Line: 30, Side: "RIGHT",
+		Body: "**Read closely.** `Get()` is new (complexity 3), nothing to compare it with. Check the cases it handles, and the ones it leaves out.\n\n" + Marker},
+		review.Comments[1], "a lone line has no start, what is said of the file is said once")
+	assert.Equal(t, ReviewComment{Path: "core/store.go", Line: 62, StartLine: 40, Side: "RIGHT", StartSide: "RIGHT",
+		Body: "**Read closely.** No new branch in `List()` (complexity 4), but the changed lines sit inside existing ones. Check that they hold in every case, not only the one the change was written for. " +
+			"The change touches it again on lines 70-71, 80-90 and 95-99.\n\n" + Marker},
+		review.Comments[2], "a function without a known end holds the spans after its start, and is told once")
+	assert.Equal(t, ReviewComment{Path: "core/store_test.go", Line: 8, Side: "RIGHT", Body: "**Read closely.** Check what this test asserts, not only that it passes.\n\n" + Marker}, review.Comments[3])
+	assert.Equal(t, ReviewComment{Path: "cmd/store.go", Line: 7, StartLine: 5, Side: "RIGHT", StartSide: "RIGHT", Body: "**Read closely.**\n\n" + Marker},
+		review.Comments[4], "no function known, no words about it")
 
 	out, err := review.JSON()
 	require.NoError(t, err)
@@ -46,10 +53,54 @@ func TestReview(t *testing.T) {
 }
 
 func TestReviewNothingToRead(t *testing.T) {
-	review := report(&engine.Plan{Changed: 2}).Review()
+	review := report(&engine.Plan{Changed: 2}).Review(0)
 	assert.Empty(t, review.Comments)
 	assert.Contains(t, review.Body, "no lines to read closely")
 	out, err := review.JSON()
 	require.NoError(t, err)
 	assert.Contains(t, out, `"comments": []`, "an empty list, so that a script can count it")
+}
+
+func TestReviewWordsWhatToCheck(t *testing.T) {
+	fn := func(name string, before, after int, isNew bool) *engine.TouchedFunction {
+		return &engine.TouchedFunction{Name: name, Before: before, After: after, New: isNew}
+	}
+	code, test := &engine.FileReport{}, &engine.FileReport{Test: true}
+
+	assert.Equal(t, "This change adds 1 branch to `Parse()`, which already had many (complexity 12 → 13). Check when the new condition is taken and whether a test takes it.",
+		whatToCheck(code, []*engine.TouchedFunction{fn("Parser::Parse", 12, 13, false)}))
+	assert.Equal(t, "This change adds branches to `B()` (complexity 3 → 7) and `A()` (complexity 2 → 4). For each new condition, check when it is taken and whether a test takes it.",
+		whatToCheck(code, []*engine.TouchedFunction{fn("A", 2, 4, false), fn("B", 3, 7, false)}), "the one with the most branches first")
+	assert.Equal(t, "`B()` and `A()` are new (complexity 6 and 2), nothing to compare them with. Check the cases they handle, and the ones they leave out.",
+		whatToCheck(code, []*engine.TouchedFunction{fn("A", 0, 2, true), fn("B", 0, 6, true)}))
+	assert.Equal(t, "New code, nothing to compare it with. `C()` and `B()` hold most of the branching (complexity 9 and 6): start there.",
+		whatToCheck(code, []*engine.TouchedFunction{fn("A", 0, 2, true), fn("B", 0, 6, true), fn("C", 0, 9, true)}))
+	assert.Equal(t, "This change removes branches from `Old()` (complexity 8 → 5). Check that the cases they handled cannot happen any more.",
+		whatToCheck(code, []*engine.TouchedFunction{fn("Old", 8, 5, false)}))
+	assert.Equal(t, "This test has logic of its own: `TestPut()` has complexity 5. Check what it asserts, not only that it passes.",
+		whatToCheck(test, []*engine.TouchedFunction{fn("TestPut", 0, 5, true)}))
+	assert.Equal(t, "These tests have logic of their own, `TestPut()` most of all (complexity 5). Check what they assert, not only that they pass.",
+		whatToCheck(test, []*engine.TouchedFunction{fn("TestGet", 0, 4, true), fn("TestPut", 0, 5, true)}))
+	assert.Empty(t, whatToCheck(code, nil))
+}
+
+func TestReviewKeepsTheFirstPlaces(t *testing.T) {
+	p := readingPlan()
+	review := p.Review(2)
+	require.Len(t, review.Comments, 2)
+	assert.Equal(t, "Cribelo marks the first 2 of the 6 places to read closely in this change. The reading map in the comment of this pull request lists them all.\n\n"+Marker, review.Body)
+	assert.Len(t, p.Review(0).Comments, 6, "ten by default; four spans at most for store.go, whose functions are not known here")
+}
+
+func TestAnnotations(t *testing.T) {
+	p := readingPlan()
+	p.Facts = []engine.Fact{{Kind: engine.FactCycle, Path: "core/store.go", Text: "introduces a cycle: 100% of store.go"}}
+	p.File("core/store.go").Functions = []engine.TouchedFunction{{Name: "Store::Put", Line: 9, Before: 2, After: 6}}
+	out := p.Annotations(0)
+	assert.Equal(t, ""+
+		"::notice file=core/store.go,line=10,endLine=14,title=Cribelo%3A read closely::This change adds 4 branches to Put() (complexity 2 → 6). For each new condition, check when it is taken and whether a test takes it. "+
+		"The change touches it again on lines 30, 40-62, 70-71, 80-90 and 1 more.%0A%0A2 files depend on this file.%0A%0Aintroduces a cycle: 100%25 of store.go\n"+
+		"::notice file=core/store_test.go,line=8,endLine=8,title=Cribelo%3A read closely::Check what this test asserts, not only that it passes.\n"+
+		"::notice file=cmd/store.go,line=5,endLine=7,title=Cribelo%3A read closely::Cribelo counts these lines among those to read closely.\n", out)
+	assert.Len(t, strings.Split(strings.TrimSpace(p.Annotations(1)), "\n"), 1)
 }
